@@ -1,6 +1,11 @@
 import { Model } from '../model/model';
 
 export class ModelManager {
+    constructor(parent) {
+        this.parent = parent;
+    }
+
+    private parent : any;
 
     private models : {};
 

@@ -10,6 +10,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jasmine": "^2.8.2",
+    "@types/node": "^8.5.5",
     "jasmine-ts": "^0.2.1",
     "reflect-metadata": "^0.1.10",
     "typescript": "^2.6.2"

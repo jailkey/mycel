@@ -8,7 +8,7 @@ export class CommandManager {
      * @param command the command data
      * @returns returns CommandManager
      */
-    public register(command : CommandData) : CommandManager{
+    public register(command : CommandData) : CommandManager {
         if(this.get(command)){
             throw new Error('Command "' + name + '" allready exists!');
         }
@@ -20,7 +20,7 @@ export class CommandManager {
      * unregisters a command
      * @param name the command data
      */
-    public unregister(command : CommandData) : CommandManager{
+    public unregister(command : CommandData) : CommandManager {
         this.commands = this.commands.filter((current) => current.name !== command.name);
         return this;
     }
@@ -30,7 +30,7 @@ export class CommandManager {
      * @param command
      * @returns the command entry or null
      */
-    public get(command : CommandData) : CommandData | null{
+    public get(command : CommandData) : CommandData | null {
         return this.commands.find((current) => current.name === command.name);
     }
 
@@ -41,5 +41,12 @@ export class CommandManager {
      */
     public getByName(commandName : string): CommandData | null {
         return this.commands.find((current) => current.name === commandName);
+    }
+
+    /**
+     * @returns an array with all commands
+     */
+    public getAll() : Array<CommandData>{
+        return this.commands;
     }
 }

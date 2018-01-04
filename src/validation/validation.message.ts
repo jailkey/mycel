@@ -3,6 +3,9 @@ export enum ValidationMessageStates {
     success = 'success'
 }
 
+/**
+ * validation message class
+ */
 export class ValidationMessage {
     constructor(state : ValidationMessageStates, text?: string,  model? : string, property? : string){
         this.state = state;

@@ -4,6 +4,7 @@ import { ControllerManager } from './controller.manager';
 import { CommandManager } from '../command/command.manager';
 import { CommandHelper, CommandChain, CommandType } from '../command/command.helper';
 import { MetaManager } from '../meta/meta.manager';
+import { CommandData } from '../command/command.data';
 
 //configurates a Controller
 export function ControllerOptions(config : any){
@@ -17,9 +18,9 @@ export class Controller {
         MetaManager.execute(this);
     }
 
-    public models : ModelManager = new ModelManager();
+    public models : ModelManager = new ModelManager(this);
 
-    public controller : ControllerManager = new ControllerManager();
+    public controller : ControllerManager = new ControllerManager(this);
 
     public commands : CommandManager =  new CommandManager();
 
@@ -29,7 +30,7 @@ export class Controller {
      * finds a controller command by a command chain
      * @param commandChain 
      */
-    public findCommand(commandChain : CommandChain) {
+    public findCommand(commandChain : CommandChain) : CommandData | null{
         
         if(commandChain.type === CommandType.namespace){
             let foundedController = this.controller.find((controller) => controller.namespace === commandChain.name);
@@ -38,7 +39,7 @@ export class Controller {
             }
 
             if(commandChain.child.type === CommandType.method){
-                return foundedController.get(commandChain.child.name);
+                return foundedController.commands.getByName(commandChain.child.name);
             }else if(commandChain.child.type === CommandType.namespace){
                 return foundedController.findCommand(commandChain.child);
             }

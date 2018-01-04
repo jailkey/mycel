@@ -1,6 +1,6 @@
 import { PresentationTree } from './presentation.tree';
 import { MetaManager } from '../meta/meta.manager';
-import { MetaDataTypes } from '../meta/meta.data';
+import { MetaDataTypes, MetaData } from '../meta/meta.data';
 import { ValidationMessage, ValidationMessageStates } from '../validation/validation.message';
 import { Validator } from '../validation/validator';
 
@@ -115,14 +115,24 @@ export class Model {
 
     }
 
-    private getMetaData(propertyName : string, type : MetaDataTypes){
+    /**
+     * filters metadata by propertyName and metadata type 
+     * @param propertyName 
+     * @param type 
+     * @returns returns an array of metadata
+     */
+    private getMetaData(propertyName : string, type : MetaDataTypes) : Array<MetaData>{
         return MetaManager.get(this).filter((current) => {
             return current.property === propertyName
                     && current.type === type
         });
     }
 
-    private getProperty(propertyName : string){
+    /**
+     * gets a property, with metadata by its propertyName
+     * @param propertyName 
+     */
+    private getProperty(propertyName : string) : ModelPropertyData | null{
         if(!propertyName.startsWith('_') && typeof propertyName !== 'function'){
             return new ModelPropertyData(
                 propertyName,
@@ -133,6 +143,9 @@ export class Model {
         return null;
     }
 
+    /**
+     * a list of alle model properties with its meta data
+     */
     public async properties() : Promise<Array<ModelPropertyData>> {
         let properties = [];
         let propertieNames = Reflect.ownKeys(this);

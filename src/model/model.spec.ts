@@ -16,7 +16,6 @@ describe('Model', () => {
     describe('properties()', () => {
         it('gets all model properties', async (done) => {
             let properties = await model.properties();
-            console.log("properties", properties)
             expect(properties[0].name).toBe('myFirstProperty')
             expect(properties[1].name).toBe('anotherProperty')
             done();

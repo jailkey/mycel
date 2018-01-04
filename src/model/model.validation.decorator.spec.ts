@@ -47,8 +47,6 @@ describe('Model Validation Decorator', () => {
         });
         expect(validations['myProperty'].isValid).toBeTruthy();
         expect(validations['anotherProperty'].isValid).toBeTruthy();
-
-        console.log(validations['myProperty'])
         done();
     })
 

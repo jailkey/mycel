@@ -1,6 +1,10 @@
 import { OnValidate } from '../validation.on.validate';
 import { ValidationMessage, ValidationMessageStates } from '../validation.message';
 
+/**
+ * validation factory
+ * @param len 
+ */
 export function MinLength(len : number){
     return class MinLength implements OnValidate {
         public async onValidate(value : string, target : any, property : string){

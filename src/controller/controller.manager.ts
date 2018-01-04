@@ -15,12 +15,33 @@ interface FindCallback {
 
 export class ControllerManager {
 
+    constructor(parent : any){
+        this.parent = parent;
+    }
+
+    /**
+     * includes the parent object 
+     */
+    private parent : any;
+
     private controllers : any = {};
+
      /**
      * registers a controller instance to the service
      * @param controller - a class that extends the Controller class
      */
     public register<T extends Controller>(controller : T){
+
+        //if controller has no namespace, register all commands on the parent controller
+        if(!controller.namespace){
+            if(!this.parent.commands){
+                throw new Error('Can not register parent command, because parent has no CommandManager.')
+            }
+            controller.commands.getAll().forEach(cmd => {
+                this.parent.commands.register(cmd);
+            });
+           
+        }
         this.controllers[controller.constructor.name] = controller;
         return this;
     }

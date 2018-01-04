@@ -1,5 +1,6 @@
 import { ControllerManager } from './controller.manager';
 import { Controller } from './controller';
+import { Service } from '../service/service';
 
 class TestController extends Controller {
     constructor() {
@@ -15,8 +16,12 @@ class UnRegisterdController extends Controller{
     }
 }
 
+class TestService extends Service {
+
+}
+
 describe('ControllerManager', () => {
-    let controllerManager = new ControllerManager();
+    let controllerManager = new ControllerManager(new TestService);
     let testController = new TestController();
 
     describe('register()', () => {

@@ -10,7 +10,7 @@ export class MongoStore implements StoreInterface {
 
     }
 
-    public async open(id : string){
+    private init(){
 
     }
 
@@ -18,7 +18,11 @@ export class MongoStore implements StoreInterface {
 
     }
 
-    public async save(id : string, value : any){
+    public async read(id : string){
+
+    }
+
+    public async update(id : string, value : any){
         return true;
     }
 

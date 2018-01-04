@@ -11,8 +11,6 @@ export function MicroService(target : any) : any {
     
 }
 
-
-
 export class Service {
 
     constructor(){
@@ -26,7 +24,7 @@ export class Service {
 
     }
 
-    public controller : ControllerManager = new ControllerManager();
+    public controller : ControllerManager = new ControllerManager(this);
 
     public middleware : MiddlwareManager = new MiddlwareManager();
 

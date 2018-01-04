@@ -1,5 +1,4 @@
 import { Controller } from '../controller/controller';
-import { Service } from './service';
 
 export interface MicroServiceOptions {
     controller : Array<typeof Controller>
@@ -11,10 +10,14 @@ export function MicroService(options : MicroServiceOptions){
 
         function construct(constructor, args) {
   
-            let newInstance : any= new constructor(...args);
-            options.controller.forEach((contr) => {
-                newInstance.controller.register(new contr())
-            });
+            let newInstance : any = new constructor(...args);
+            
+            if(options.controller && options.controller.length){
+                options.controller.forEach((contr) => {
+                    newInstance.controller.register(new contr())
+                });
+            }
+           
             return newInstance;
         }
 
