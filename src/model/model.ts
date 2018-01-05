@@ -4,16 +4,29 @@ import { MetaDataTypes, MetaData } from '../meta/meta.data';
 import { ValidationMessage, ValidationMessageStates } from '../validation/validation.message';
 import { Validator } from '../validation/validator';
 
+export interface ModelPropertyDataOptions {
+    validations? : Array<any>
+    presentation?: any
+    index? : boolean
+    autoIncrement? : boolean
+}
+
 export class ModelPropertyData {
-    constructor(name : string, value? : any, validations? : any){
+    constructor(name : string, value? : any, options? : ModelPropertyDataOptions){
         this.name = name;
         this.value = value;
-        this.validations = validations || [];
+        if(options) {
+            this.validations = options.validations || [];
+            this.index = options.index || false;
+            this.autoIncrement = options.autoIncrement || false;
+        }
     }
     public name : string;
     public value : any;
-    public validations : Array<any>;
+    public validations : Array<any> = [];
     public presentation : any;
+    public index : boolean = false;
+    public autoIncrement : boolean = false;
 }
 
 export interface UpdateData {
@@ -137,7 +150,7 @@ export class Model {
             return new ModelPropertyData(
                 propertyName,
                 this[propertyName],
-                this.getMetaData(propertyName, MetaDataTypes.validation)
+                { validations : this.getMetaData(propertyName, MetaDataTypes.validation) }
             )
         }
         return null;

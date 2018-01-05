@@ -1,7 +1,14 @@
+import { ModelPropertyData, Model } from '../model/model';
+
+export interface RessourceAccessKey {
+    [key : string] : string
+}
+
 export interface Store {
-    create(data : any) : Promise<any>
-    read(resourceId : string) : Promise<any>
-    update(resourceId : string, data : any) : Promise<boolean>
-    remove(resourceId) : Promise<boolean>
+    create(data : Array<ModelPropertyData>) : Promise<boolean>
+    read(resourceId : RessourceAccessKey) : Promise<any>
+    update(resourceId : RessourceAccessKey, data : Array<ModelPropertyData>) : Promise<boolean>
+    remove(resourceId : RessourceAccessKey) : Promise<boolean>
     query(query : string) : Promise<Array<any>>
 }
+

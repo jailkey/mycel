@@ -5,6 +5,5 @@ export class StorePermissions {
     }
 
     public read : boolean
-
     public write : boolean
 }

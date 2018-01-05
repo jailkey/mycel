@@ -1,16 +1,19 @@
-import { Store } from './store';
+import { Store, RessourceAccessKey } from './store';
 import { exists, open, readFile, writeFile } from 'fs';
 import { StorePermissions } from './store.permissions';
+import { ModelPropertyData, Model } from '../model/model';
+
 
 export interface FileStoreOptions {
-    storagePath : string,
+    path : string,
     name : string,
     permissions : StorePermissions
 }
 
+
 export class FileStore implements Store {
     constructor(options : FileStoreOptions){
-
+        this.options = options;
     }
 
     private options : FileStoreOptions;
@@ -23,7 +26,7 @@ export class FileStore implements Store {
     }
 
     private getFilePath(){
-        return this.options.storagePath + '/' + this.options.name + '.json';
+        return this.options.path + '/' + this.options.name + '.json';
     }
 
     private async fileExists() : Promise<any> {
@@ -52,16 +55,22 @@ export class FileStore implements Store {
                     if(!exists){
                         resolve([])
                     }else{
-                        readFile(this.getFilePath(), (err, data : any) => {
+                        readFile(this.getFilePath(), 'utf8', (err, data : any) => {
                             if(err){
                                 reject(err);
                                 return;
                             }
-                            resolve(JSON.parse(data));
+                            if(data){
+                                resolve(JSON.parse(data));
+                            }else{
+                                resolve([]);
+                            }
                         })
                     }
+                }else{
+                    reject(new Error('You do not have permissions to read the file "' + this.getFilePath() + '".'));
                 }
-                reject(new Error('You do not have permissions to read the file "' + this.options.name + '".'));
+                
             }catch(e){
                 reject(e);
             }
@@ -80,7 +89,7 @@ export class FileStore implements Store {
                         resolve(true);
                     })
                 }else{
-                    reject(new Error('You do not have permissions to write the file "' + this.options.name + '".'))
+                    reject(new Error('You do not have permissions to write the file "' + this.getFilePath() + '".'))
                 }
             }catch(e){
                 reject(e);
@@ -88,27 +97,112 @@ export class FileStore implements Store {
         })
     }
 
-    private getUniqueId(){
-        
+    private autoIncrement(fileData : Array<any>, property : string){
+        if(!fileData.length){
+            return 0;
+        }
+        let result = fileData.reduce((previous, current) => {
+
+            return (previous[property] > current[property]) ? previous : current;
+        });
+        return result[property]++;
     }
 
-    public async create(data : any) {
-        
+    public async create(data : Array<ModelPropertyData>) {
+        try {
+            let savedData = {};
+            let fileData = await this.readFile();
+            for(let property of data){
+                savedData[property.name] = (property.autoIncrement) 
+                    ? this.autoIncrement(fileData, property.name)
+                    : property.value
+            }
+            fileData.push(savedData);
+            await this.writeFile(fileData);
+            return true;
+        }catch(e){
+            throw e;
+        }
     }
 
-    public async read(resourceId : string){
-
+    private findKey(resourceId : RessourceAccessKey, data : Array<any>){
+        return data.find((current : any) => {
+            let found = true;
+            for(let key of Object.keys(resourceId)){
+                if(current[key] !== resourceId[key]){
+                    found = false;
+                }
+            }
+            return found;
+        })
     }
 
-    public async update(resourceId : string, data : any){
-        return true;
+    public async read(resourceId : RessourceAccessKey){
+        try {
+            let fileData = await this.readFile();
+            return this.findKey(resourceId, fileData);
+        }catch(e){
+            throw e;
+        }
     }
 
-    public async remove(resourceId : string){
-        return true;
+    public async update(resourceId : RessourceAccessKey, data : any){
+        try {
+            let fileData = await this.readFile();
+            for(let i = 0; i < fileData.length; i++){
+                let found = true;
+                for(let key of Object.keys(resourceId)){
+                    if(fileData[i][key] !== resourceId[key]){
+                        found = false;
+                    }
+                }
+                if(found){
+                    for(let prop in data){
+                        if(data.hasOwnProperty(prop)){
+                            fileData[i][prop] = data[prop];
+                        }
+                    }
+                    await this.writeFile(fileData);
+                    return true;
+                }
+            }
+        }catch(e){
+            throw e;
+        }
+       
+    }
+
+    public async remove(resourceId : RessourceAccessKey){
+        try {
+            let fileData = await this.readFile();
+            for(let i = 0; i < fileData.length; i++){
+                let found = true;
+                for(let key of Object.keys(resourceId)){
+                    if(fileData[i][key] !== resourceId[key]){
+                        found = false;
+                    }
+                }
+                if(found){
+                    fileData.splice(i, 1);
+                    await this.writeFile(fileData);
+                    return true;
+                }
+            }
+        }catch(e){
+            throw e;
+        }
+    }
+
+    public async reset(){
+        try {
+            await this.writeFile([]);
+            return true;
+        }catch(e){
+            throw e;
+        }
     }
 
     public async query(query : any){
-
+        return [];
     }
 }
