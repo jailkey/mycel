@@ -22,13 +22,13 @@ class MyDecoratedTestModel extends Model {
 
     @Index
     @AutoIncrement
-    public id : '';
+    public id : number = 0;
 
     @Validation(Require)
-    public firstName : '';
+    public firstName : string = null;
 
     @Validation(Require)
-    public lastName : '';
+    public lastName : string = null;
 }
 
 
@@ -43,14 +43,33 @@ describe('@ModelOptions', () => {
         it('tries to create an invalid dataset.', async (done) => {
             try {
                 let result = await model.create({
-                    fistName : 'Hans'
+                    firstName : 'Hans'
                 })
             }catch(e){
-                console.log("e", e)
+                expect(e.name).toBe('MyDecoratedTestModel');
+                expect(e.validation.properties.firstName.isValid).toBeTruthy();
+                expect(e.validation.properties.lastName.isValid).toBeFalsy();
+            }finally{
+                done();
             }
-            done()
+        })
+
+        it('creates an entry with a valid dataset', async(done) => {
+            try {
+                let result = await model.create({
+                    firstName : 'Hans',
+                    lastName : 'Peter'
+                })
+                expect(result).toBeTruthy();
+                done();
+            }catch(e){
+                console.log("E", e.validation.properties)
+            }
+           
+            
         })
     })
+
 
       
 })

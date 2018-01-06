@@ -11,6 +11,7 @@ export function ModelOptions(options : ModelData){
         function construct(constructor, args) {
   
             let newInstance : any = new constructor(...args);
+            newInstance.__storage = options.storage;
             return newInstance;
         }
 

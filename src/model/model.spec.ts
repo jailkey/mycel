@@ -20,6 +20,5 @@ describe('Model', () => {
             expect(properties[1].name).toBe('anotherProperty')
             done();
         })
-    
     })
 })

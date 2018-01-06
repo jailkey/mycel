@@ -15,7 +15,7 @@ class MyTestModel extends Model {
     public anotherProperty : string = '';
 }
 
-describe('Model Validation Decorator', () => {
+describe('@Validation', () => {
     let model = new MyTestModel()
 
     it('tests if the first validation decorator is existing', async (done) => {
@@ -35,8 +35,8 @@ describe('Model Validation Decorator', () => {
 
     it('it validates the properties and checks if they are invalid', async (done) => {
         let validations = await model.validate();
-        expect(validations['myProperty'].isValid).toBeFalsy();
-        expect(validations['anotherProperty'].isValid).toBeFalsy();
+        expect(validations.properties['myProperty'].isValid).toBeFalsy();
+        expect(validations.properties['anotherProperty'].isValid).toBeFalsy();
         done();
     })
 
@@ -45,8 +45,8 @@ describe('Model Validation Decorator', () => {
             myProperty : 'something',
             anotherProperty : 'something'
         });
-        expect(validations['myProperty'].isValid).toBeTruthy();
-        expect(validations['anotherProperty'].isValid).toBeTruthy();
+        expect(validations.properties['myProperty'].isValid).toBeTruthy();
+        expect(validations.properties['anotherProperty'].isValid).toBeTruthy();
         done();
     })
 
