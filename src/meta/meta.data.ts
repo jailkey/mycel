@@ -3,7 +3,8 @@ export enum MetaDataTypes {
     info = 'info',
     validation = 'validation',
     presentation = 'presentation',
-    index = 'index'
+    index = 'index',
+    autoIncrement = 'autoIncrement'
 }
 
 export interface MetaData {

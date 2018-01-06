@@ -45,7 +45,6 @@ describe('Controller Options Decorator', () => {
     })
 
     it('tests if all methods exists', () => {
-        console.log("controller", controller.commands.getAll())
         let allCommands = controller.commands.getAll();
         expect(allCommands.length).toBe(2);
         expect(allCommands[0].name).toBe('myTestComannd');

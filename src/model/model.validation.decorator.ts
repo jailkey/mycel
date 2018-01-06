@@ -15,7 +15,6 @@ export function Validation (validation : any) : Function {
         }
       
         MetaManager.set(target, metaData);
-        //console.log("set metadara", target, metaData)
 
         return descriptor;
     }

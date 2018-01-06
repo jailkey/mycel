@@ -3,6 +3,7 @@ import { MetaManager } from '../meta/meta.manager';
 import { MetaDataTypes, MetaData } from '../meta/meta.data';
 import { ValidationMessage, ValidationMessageStates } from '../validation/validation.message';
 import { Validator } from '../validation/validator';
+import { Storage } from '../storage/storage';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
@@ -45,6 +46,8 @@ export class Model {
     constructor() {
         MetaManager.execute(this);
     }
+
+    public storage : Storage;
     
     public presentations() : Promise<PresentationTree> { 
         return;
@@ -112,7 +115,12 @@ export class Model {
 
     }
 
-    public async create() : Promise<any> {
+    public async create(data : any) : Promise<any> {
+        let validation = await this.validate(data);
+        console.log("create validation", validation)
+    }
+
+    public async read() : Promise<any> {
 
     }
 
@@ -120,11 +128,7 @@ export class Model {
         
     }
 
-    public async get() : Promise<any> {
-
-    }
-
-    public async delete() : Promise<any> {
+    public async remove() : Promise<any> {
 
     }
 

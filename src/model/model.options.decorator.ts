@@ -1,7 +1,7 @@
-import { Store } from '../store/store';
+import { Storage } from '../storage/storage';
 
 export interface ModelData {
-    storage : Store
+    storage : Storage
 }
 
 export function ModelOptions(options : ModelData){

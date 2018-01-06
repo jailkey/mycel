@@ -31,7 +31,6 @@ describe("FileStore", () => {
             let entry = await store.read({ id : 0 });
             expect(entry.name).toBe('Hans');
             expect(entry.lastname).toBe('Peter');
-            console.log("ENTRY", entry)
             done();
         })
     })

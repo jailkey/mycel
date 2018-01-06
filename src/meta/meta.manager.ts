@@ -41,7 +41,8 @@ class MetaTypeInitialiserClass {
     public execute(target : any, data : MetaData){
         let initialiser = this.get(data.type);
         if(!initialiser) {
-            throw new Error('No initialiser for type "' + data.type + "' found!");
+            return;
+            //throw new Error('No initialiser for type "' + data.type + "' found!");
         }
 
         return initialiser.initialiser(target, data)
@@ -72,7 +73,6 @@ export class MetaManager {
      * @param target 
      */
     public static get(target : any) : Array<MetaData>{
-        console.log("get", target);
         return target.__meta || [];
     }
 

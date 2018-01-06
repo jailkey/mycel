@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { CommandData } from './command.data';
 import { MetaData, MetaDataTypes } from '../meta/meta.data';
 import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';

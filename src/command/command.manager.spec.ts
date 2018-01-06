@@ -4,7 +4,7 @@ import { CommandData } from './command.data';
 describe('CommandManager', () => {
     let commandManager = new CommandManager();
 
-    let TestCommand = new CommandData('myCommand', () => { console.log("test") }, ['hans']);
+    let TestCommand = new CommandData('myCommand', () => { }, ['hans']);
     let UnRegisterdCommand = new CommandData('myUnregisterdCommand', () => {},  ['hans']);
 
     describe('register()', () => {
