@@ -1,17 +1,17 @@
-import { Store, RessourceAccessKey } from './store';
+import { Storage, RessourceAccessKey } from './storage';
 import { exists, open, readFile, writeFile } from 'fs';
-import { StorePermissions } from './store.permissions';
+import { StoragePermissions } from './storage.permissions';
 import { ModelPropertyData, Model } from '../model/model';
 
 
 export interface FileStoreOptions {
     path : string,
     name : string,
-    permissions : StorePermissions
+    permissions : StoragePermissions
 }
 
 
-export class FileStore implements Store {
+export class FileStorage implements Storage {
     constructor(options : FileStoreOptions){
         this.options = options;
     }
@@ -108,6 +108,22 @@ export class FileStore implements Store {
         return result[property]++;
     }
 
+    private findKey(resourceId : RessourceAccessKey, data : Array<any>){
+        return data.find((current : any) => {
+            let found = true;
+            for(let key of Object.keys(resourceId)){
+                if(current[key] !== resourceId[key]){
+                    found = false;
+                }
+            }
+            return found;
+        })
+    }
+
+    /**
+     * creates a new entry with the given data
+     * @param data 
+     */
     public async create(data : Array<ModelPropertyData>) {
         try {
             let savedData = {};
@@ -125,18 +141,10 @@ export class FileStore implements Store {
         }
     }
 
-    private findKey(resourceId : RessourceAccessKey, data : Array<any>){
-        return data.find((current : any) => {
-            let found = true;
-            for(let key of Object.keys(resourceId)){
-                if(current[key] !== resourceId[key]){
-                    found = false;
-                }
-            }
-            return found;
-        })
-    }
-
+    /**
+     * reads an entry by the resource RessourceAccessKey
+     * @param resourceId 
+     */
     public async read(resourceId : RessourceAccessKey){
         try {
             let fileData = await this.readFile();
@@ -146,6 +154,11 @@ export class FileStore implements Store {
         }
     }
 
+    /**
+     * updates an entry by RessourceAccessKey
+     * @param resourceId 
+     * @param data 
+     */
     public async update(resourceId : RessourceAccessKey, data : any){
         try {
             let fileData = await this.readFile();
@@ -172,6 +185,10 @@ export class FileStore implements Store {
        
     }
 
+    /**
+     * removes an entry by a RessourceAccessKey
+     * @param resourceId 
+     */
     public async remove(resourceId : RessourceAccessKey){
         try {
             let fileData = await this.readFile();
@@ -193,6 +210,9 @@ export class FileStore implements Store {
         }
     }
 
+    /**
+     * deletes all entries from the storage
+     */
     public async reset(){
         try {
             await this.writeFile([]);

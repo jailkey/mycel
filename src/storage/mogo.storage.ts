@@ -1,10 +1,10 @@
-import { StoreInterface } from './store';
+import { Storage } from './storage';
 
 export interface MongoStoreConfig {
     name : string;
 }
 
-export class MongoStore implements StoreInterface {
+export class MongoStorage implements Storage {
     
     constructor(config : MongoStoreConfig){
 

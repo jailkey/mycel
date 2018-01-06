@@ -1,17 +1,15 @@
-import { FileStore, FileStoreOptions} from './file.store';
-import { StorePermissions } from './store.permissions';
+import { FileStorage, FileStoreOptions} from './file.storage';
+import { StoragePermissions } from './storage.permissions';
 import { ModelPropertyData } from '../model/model'
 
 describe("FileStore", () => {
     let store;
-
-
     describe('constructor()', () => {
         it('creates an instance of FileStore', () => {
-            store = new FileStore({
+            store = new FileStorage({
                 path : './tmp',
                 name : 'mytest',
-                permissions : new StorePermissions(true, true)
+                permissions : new StoragePermissions(true, true)
             });
         })
     })
