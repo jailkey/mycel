@@ -37,7 +37,7 @@ describe("FileStore", () => {
 
     describe('update()', () => {
         it('updates an existing entry', async (done) => {
-            let result = await store.update({ id : 0 }, { name : 'Testmann'});
+            let result = await store.update({ id : 0 }, [ new ModelPropertyData('name', 'Testmann')]);
             expect(result).toBeTruthy();
             let entry = await store.read({ id : 0 });
             expect(entry.name).toBe('Testmann');

@@ -1,4 +1,4 @@
-import { Storage, RessourceAccessKey } from './storage';
+import { Storage, ResourceAccessKey } from './storage';
 import { exists, open, readFile, writeFile } from 'fs';
 import { StoragePermissions } from './storage.permissions';
 import { ModelPropertyData, Model } from '../model/model';
@@ -108,7 +108,7 @@ export class FileStorage implements Storage {
         return result[property]++;
     }
 
-    private findKey(resourceId : RessourceAccessKey, data : Array<any>){
+    private findKey(resourceId : ResourceAccessKey, data : Array<any>){
         return data.find((current : any) => {
             let found = true;
             for(let key of Object.keys(resourceId)){
@@ -145,7 +145,7 @@ export class FileStorage implements Storage {
      * reads an entry by the resource RessourceAccessKey
      * @param resourceId 
      */
-    public async read(resourceId : RessourceAccessKey){
+    public async read(resourceId : ResourceAccessKey){
         try {
             let fileData = await this.readFile();
             return this.findKey(resourceId, fileData);
@@ -159,7 +159,7 @@ export class FileStorage implements Storage {
      * @param resourceId 
      * @param data 
      */
-    public async update(resourceId : RessourceAccessKey, data : any){
+    public async update(resourceId : ResourceAccessKey, data : Array<ModelPropertyData>){
         try {
             let fileData = await this.readFile();
             for(let i = 0; i < fileData.length; i++){
@@ -170,10 +170,8 @@ export class FileStorage implements Storage {
                     }
                 }
                 if(found){
-                    for(let prop in data){
-                        if(data.hasOwnProperty(prop)){
-                            fileData[i][prop] = data[prop];
-                        }
+                    for(let y = 0; y < data.length; y++){
+                        fileData[i][data[y].name] = data[y].value;
                     }
                     await this.writeFile(fileData);
                     return true;
@@ -189,7 +187,7 @@ export class FileStorage implements Storage {
      * removes an entry by a RessourceAccessKey
      * @param resourceId 
      */
-    public async remove(resourceId : RessourceAccessKey){
+    public async remove(resourceId : ResourceAccessKey){
         try {
             let fileData = await this.readFile();
             for(let i = 0; i < fileData.length; i++){

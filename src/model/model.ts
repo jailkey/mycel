@@ -6,12 +6,14 @@ import { Validator } from '../validation/validator';
 import { Storage } from '../storage/storage';
 import { PropertyValidationMessageList, ValidationResult } from './model.validation.interfaces';
 import { ModelValidationError } from './model.validation.error';
+import { ResourceAccessKey } from '../storage/storage';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
     presentation?: any
     index? : boolean
     autoIncrement? : boolean
+    key? : boolean
 }
 
 export class ModelPropertyData {
@@ -22,6 +24,7 @@ export class ModelPropertyData {
             this.validations = options.validations || [];
             this.index = options.index || false;
             this.autoIncrement = options.autoIncrement || false;
+            this.key = options.key || false;
         }
     }
     public name : string;
@@ -30,6 +33,7 @@ export class ModelPropertyData {
     public presentation : any;
     public index : boolean = false;
     public autoIncrement : boolean = false;
+    public key : boolean = false; 
 }
 
 export interface UpdateData {
@@ -93,6 +97,18 @@ export class Model {
         })
     }
 
+    private async getKeys() {
+        let properties = await this.properties();
+        let keys = properties
+            .filter((current) => current.key)
+            .map((current) => current.name);
+
+        if(!keys.length){
+            throw new Error('No Keys for model "' + this.constructor.name + "' specified!")
+        }
+        return keys;
+    }
+
     /**
      * validates the complete model
      * @param data if data is defined this values will used for validation
@@ -134,42 +150,25 @@ export class Model {
         return properties;
     }
 
-    public async query(query : any) : Promise<any> {
-
-    }
-
-    public async create(data : any) : Promise<boolean> {
+    private async convertToResourceAccessKey(data : any) : Promise<ResourceAccessKey> {
         try {
-            let validation = await this.validate(data);
-            if(!validation.isValid) {
-                throw new ModelValidationError(
-                    'Model "' + this.constructor.name + '" is not valid!',
-                    this.constructor.name,
-                    validation
-                )
+            let output : ResourceAccessKey = {};
+            let keys = await this.getKeys();
+    
+            for(let key of keys){
+                if(!data.hasOwnProperty(key)){
+                    throw new Error('Can not convert data to RessourceAccessKey, because the data has not property "' + key + '"');
+                }
+                output[key] = data[key];
             }
-            let propertyData = await this.convertToModelPropertyData(data);
-            console.log(propertyData);
-            let result = await this.__storage.create(propertyData);
-            return result;
-        }catch(e){
+
+            return output;
+        }catch(e) {
             throw e;
         }
     }
 
-    public async read() : Promise<any> {
-
-    }
-
-    public async update() : Promise<any> {
-        
-    }
-
-    public async remove() : Promise<any> {
-
-    }
-
-    /**
+     /**
      * filters metadata by propertyName and metadata type 
      * @param propertyName 
      * @param type 
@@ -197,19 +196,107 @@ export class Model {
     private getProperty(propertyName : string) : ModelPropertyData | null{
         if(!propertyName.startsWith('_') && typeof propertyName !== 'function'){
             let autoIncrement =  this.getFirstMetaData(propertyName, MetaDataTypes.autoIncrement);
-            let index =  this.getFirstMetaData(propertyName, MetaDataTypes.index);
+            let index = this.getFirstMetaData(propertyName, MetaDataTypes.index);
+            let key = this.getFirstMetaData(propertyName, MetaDataTypes.key);
             return new ModelPropertyData(
                 propertyName,
                 this[propertyName],
                 { 
                     validations : this.getMetaData(propertyName, MetaDataTypes.validation),
                     autoIncrement : (autoIncrement) ? autoIncrement.value : false,
-                    index : (index) ? index.value : false
+                    index : (index) ? index.value : false,
+                    key : (key) ? key.value : false
                  }
             )
         }
         return null;
     }
+
+ 
+
+    public async query(query : any) : Promise<any> {
+
+    }
+
+    /**
+     * creates a new model entry
+     * @param data and key / value object with the data
+     * @throws throws an validation error if the data is not valid
+     */
+    public async create(data : any) : Promise<boolean> {
+        try {
+            let validation = await this.validate(data);
+            if(!validation.isValid) {
+                throw new ModelValidationError(
+                    'Model "' + this.constructor.name + '" is not valid!',
+                    this.constructor.name,
+                    validation
+                )
+            }
+            let propertyData = await this.convertToModelPropertyData(data);
+            let result = await this.__storage.create(propertyData);
+            return result;
+        }catch(e){
+            throw e;
+        }
+    }
+
+    /**
+     * reads an entry by the given resource 
+     * @param resource
+     */
+    public async read(resource : any) : Promise<any> {
+        try {
+            let accessKey = await this.convertToResourceAccessKey(resource);
+            return this.__storage.read(accessKey);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    /**
+     * updates an existing entry
+     * @param resource
+     * @param data 
+     * @throws throws an ModelValidationError if the data is not valid
+     */
+    public async update(resource : any, data : any) : Promise<any> {
+        try {
+            let accessKey = await this.convertToResourceAccessKey(resource);
+            let currentData = await this.read(accessKey);
+            for(let prop in data){
+                if(data.hasOwnProperty(prop)){
+                    currentData[prop] = data[prop];
+                }
+            }
+            let validation = await this.validate(currentData);
+            if(!validation.isValid) {
+                throw new ModelValidationError(
+                    'Model "' + this.constructor.name + '" is not valid!',
+                    this.constructor.name,
+                    validation
+                )
+            }
+            let propertyData = await this.convertToModelPropertyData(currentData);
+            return this.__storage.update(accessKey, propertyData);
+        }catch(e){
+            throw e;
+        }
+    }
+
+    /**
+     * removes a resource
+     * @param resource 
+     */
+    public async remove(resource : any) : Promise<any> {
+        try {
+            let accessKey = await this.convertToResourceAccessKey(resource);
+            return this.__storage.remove(accessKey);
+        }catch(e){
+            throw e;
+        }
+    }
+
 
     /**
      * a list of alle model properties with its meta data

@@ -6,6 +6,7 @@ import { AutoIncrement } from './model.autoincrement.decorator';
 import { Index } from './model.index.decorator';
 import { Validation } from './model.validation.decorator';
 import { Require } from '../validation/validations/require';
+import { Key } from './model.key.decorator';
 
 @ModelOptions({
     storage : new FileStorage({
@@ -20,7 +21,7 @@ class MyDecoratedTestModel extends Model {
         super();
     }
 
-    @Index
+    @Key
     @AutoIncrement
     public id : number = 0;
 
@@ -54,7 +55,7 @@ describe('@ModelOptions', () => {
             }
         })
 
-        it('creates an entry with a valid dataset', async(done) => {
+        it('creates an entry with a valid dataset.', async(done) => {
             try {
                 let result = await model.create({
                     firstName : 'Hans',
@@ -64,9 +65,64 @@ describe('@ModelOptions', () => {
                 done();
             }catch(e){
                 console.log("E", e.validation.properties)
+            } 
+        })
+    })
+
+    describe('read()', () => {
+        it('reads an entry by a given id.', async (done) => {
+            let result = await model.read({ id : 0 });
+            expect(result.id).toBe(0);
+            expect(result.firstName).toBe('Hans');
+            expect(result.lastName).toBe('Peter');
+            done();
+        });
+
+        
+    })
+
+    describe('update()', () => {
+        it('updates an entry by a given id.', async (done) => {
+            let result = await model.update({ id : 0 }, { firstName : 'Dieter'});
+            expect(result).toBeTruthy();
+            done();
+        })
+
+        it('reads the updated entry to check if it realy contains the updates', async(done) => {
+            let result = await model.read({ id : 0 });
+            expect(result.firstName).toBe('Dieter');
+            done();
+        })
+
+        it('tries to update a non existing value', async (done) => {
+            try {
+                let result = await model.update({ id : 10 }, { firstName : 'Dieter'});
+            }catch(e){
+                expect(e.message).toBe("Cannot set property 'firstName' of undefined");
+                done();
             }
-           
             
+        })
+    })
+
+    describe('remove()', () => {
+        it('removes a entry', async (done) => {
+            let result = await model.remove({ id : 0 });
+            expect(result).toBeTruthy();
+            done();
+        })
+
+        it('checks if the entry was removed', async (done) => {
+            let result = await model.read({ id : 0 })
+            expect(result).toBeFalsy();
+            done()
+        })
+    })
+
+    describe('__storage.reset()', () => {
+        it('resets the the test' , async() => {
+            let result = await model.__storage.reset();
+            expect(result).toBeTruthy();
         })
     })
 

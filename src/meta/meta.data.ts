@@ -4,7 +4,8 @@ export enum MetaDataTypes {
     validation = 'validation',
     presentation = 'presentation',
     index = 'index',
-    autoIncrement = 'autoIncrement'
+    autoIncrement = 'autoIncrement',
+    key = 'key'
 }
 
 export interface MetaData {
