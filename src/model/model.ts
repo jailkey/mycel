@@ -7,6 +7,7 @@ import { Storage } from '../storage/storage';
 import { PropertyValidationMessageList, ValidationResult } from './model.validation.interfaces';
 import { ModelValidationError } from './model.validation.error';
 import { ResourceAccessKey } from '../storage/storage';
+import { CommandManager } from '../command/command.manager';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
@@ -47,6 +48,8 @@ export class Model {
     }
 
     public __storage : Storage;
+
+    public __commands : CommandManager =  new CommandManager();
     
     public presentations() : Promise<PresentationTree> { 
         return;
@@ -213,7 +216,6 @@ export class Model {
     }
 
  
-
     public async query(query : any) : Promise<any> {
 
     }
@@ -248,7 +250,8 @@ export class Model {
     public async read(resource : any) : Promise<any> {
         try {
             let accessKey = await this.convertToResourceAccessKey(resource);
-            return this.__storage.read(accessKey);
+            let result = await this.__storage.read(accessKey);
+            return result;
         }catch(e){
             throw e;
         }

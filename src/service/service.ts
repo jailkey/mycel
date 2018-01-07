@@ -77,7 +77,7 @@ export class Service {
             if(!command){
                 throw new Error('Can not find command "' + request.command + '"!')
             }
-            let result = command.execute(request.data);
+            let result = await command.execute(request.data);
             return new ServiceResponse(true, result);
         }catch(e){
             return new ServiceResponse(false, { error : e })

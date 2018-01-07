@@ -11,9 +11,9 @@ export class CommandData {
         }
     }
 
-    public execute(data : any){
+    public async execute(data : any){
         let parameterValues = this.parameter.map((current) => data[current]);
-        return this.reference(...parameterValues);
+        return await this.reference(...parameterValues);
     }
 
     public name : string

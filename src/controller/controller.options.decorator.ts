@@ -14,6 +14,7 @@ export function ControllerOptions(options : ControllerData){
         function construct(constructor, args) {
   
             let newInstance : any = new constructor(...args);
+            newInstance.__name = target.name;
 
             if(options.namespace){
                 newInstance.namespace = options.namespace
@@ -26,8 +27,8 @@ export function ControllerOptions(options : ControllerData){
             }
 
             if(options.models && options.models.length) {
-                options.models.forEach((contr) => {
-                    newInstance.models.register(new contr())
+                options.models.forEach((model) => {
+                    newInstance.models.register(model)
                 });
             }
 
@@ -39,6 +40,8 @@ export function ControllerOptions(options : ControllerData){
         }
 
         wrapped.prototype = original.prototype;
+
+        wrapped.__name = target.name;
 
         return wrapped;
     }

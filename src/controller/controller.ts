@@ -16,6 +16,7 @@ export class Controller {
 
     constructor() {
         MetaManager.execute(this);
+        this.__name = this.constructor.name;
     }
 
     public models : ModelManager = new ModelManager(this);
@@ -26,6 +27,8 @@ export class Controller {
 
     public namespace : string;
 
+    public __name : string;
+
     /**
      * finds a controller command by a command chain
      * @param commandChain 
@@ -33,6 +36,14 @@ export class Controller {
     public findCommand(commandChain : CommandChain) : CommandData | null{
         
         if(commandChain.type === CommandType.namespace){
+            let foundedModel = this.models.getByName(commandChain.name);
+            if(foundedModel){
+                if(commandChain.child.type === CommandType.method){
+                    return foundedModel.__commands.getByName(commandChain.child.name);
+                }else{
+                    throw new Error('It is not possible to nest Models. (' + commandChain.child.name + ')' )
+                }
+            }
             let foundedController = this.controller.find((controller) => controller.namespace === commandChain.name);
             if(!foundedController) {
                 throw new Error('There is no registerd controller with namespace "' + commandChain.name + '"!');

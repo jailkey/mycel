@@ -29,7 +29,7 @@ describe('Service', () => {
             'myFirstCommand', 
             testController.myFirstCommand.bind(testController),
             ['hans']
-        )
+        );
         testController.commands.register(testCommand);
     })
 
@@ -41,9 +41,10 @@ describe('Service', () => {
 
     describe('applyRequest()', () => {
         it('applies a new request to the service', async (done) => {
+            
             let request = new ServiceRequest('MyService:MyTestController.myFirstCommand',  {
                 hans : 'peter'
-            })
+            });
 
             let result = await service.applyRequest(request);
 

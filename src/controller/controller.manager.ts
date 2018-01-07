@@ -42,22 +42,23 @@ export class ControllerManager {
             });
            
         }
-        this.controllers[controller.constructor.name] = controller;
+        this.controllers[controller.__name] = controller;
         return this;
     }
 
     /**
-     * a factory function that returns a new controller
+     * gets a controller by the controller class
      * @param controller - a controller class that should be instantiated, if the class do not exists it returns null
      */
     public get<T extends typeof Controller>(controller) : new() => T {
-        if(!controller.name){
+        let name = controller.__name || controller.name;
+        if(!name){
             throw new Error('Something went wrong while getting the conroller, may be you try to get it by an instance not an class');
         }
-        if(this.controllers[controller.name]){
-            return this.controllers[controller.name];
+        if(this.controllers[name]){
+            return this.controllers[name];
         }
-        throw new Error('Controller "' + controller.name + '" is not registerd!');
+        throw new Error('Controller "' + name + '" is not registerd!');
     }
 
     /**
@@ -95,7 +96,7 @@ export class ControllerManager {
      * @returns ControllerManager
      */
     public unregister<T extends typeof Controller>(controller : any){
-        delete this.controllers[controller.constructor.name];
+        delete this.controllers[controller.__name];
         return this;
     }
 
