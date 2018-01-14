@@ -120,6 +120,7 @@ export class FileStorage implements Storage {
         })
     }
 
+
     /**
      * creates a new entry with the given data
      * @param data 
@@ -135,7 +136,7 @@ export class FileStorage implements Storage {
             }
             fileData.push(savedData);
             await this.writeFile(fileData);
-            return true;
+            return savedData;
         }catch(e){
             throw e;
         }

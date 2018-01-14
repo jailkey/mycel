@@ -7,10 +7,6 @@ import { CommandManager } from '../command/command.manager';
 import { CommandData } from '../command/command.data';
 import { MetaManager } from '../meta/meta.manager';
 
-export function MicroService(target : any) : any {
-    
-}
-
 export class Service {
 
     constructor(){
@@ -81,6 +77,19 @@ export class Service {
             return new ServiceResponse(true, result);
         }catch(e){
             return new ServiceResponse(false, { error : e })
+        }
+    }
+
+    //start service
+    public static start(){
+        if(this['onStart']){
+            this['onStart']();
+        }
+    }
+
+    public static stop(){
+        if(this['onStop']){
+            this['onStop']();
         }
     }
 }

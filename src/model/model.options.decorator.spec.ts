@@ -7,6 +7,24 @@ import { Index } from './model.index.decorator';
 import { Validation } from './model.validation.decorator';
 import { Require } from '../validation/validations/require';
 import { Key } from './model.key.decorator';
+import { Relation, RelationTypes } from '../relation/relation';
+
+@ModelOptions({
+    storage : new FileStorage({
+        path : './tmp',
+        name : 'my_sublist',
+        permissions : new StoragePermissions(true, true)
+    })
+})
+class RelationModel extends Model {
+
+    @Key
+    @AutoIncrement
+    public id : number = 0;
+
+    public someKey : string = '';
+}
+
 
 @ModelOptions({
     storage : new FileStorage({
@@ -30,6 +48,9 @@ class MyDecoratedTestModel extends Model {
 
     @Validation(Require)
     public lastName : string = null;
+
+   // @Relation(RelationModel, [ 'id' ], RelationTypes.M2N)
+    public someEntries : Array<any> = [];
 }
 
 
@@ -45,6 +66,7 @@ describe('@ModelOptions', () => {
             try {
                 let result = await model.create({
                     firstName : 'Hans'
+                    
                 })
             }catch(e){
                 expect(e.name).toBe('MyDecoratedTestModel');

@@ -8,13 +8,15 @@ import { PropertyValidationMessageList, ValidationResult } from './model.validat
 import { ModelValidationError } from './model.validation.error';
 import { ResourceAccessKey } from '../storage/storage';
 import { CommandManager } from '../command/command.manager';
+import { RelationClass } from '../relation/relation';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
     presentation?: any
     index? : boolean
     autoIncrement? : boolean
-    key? : boolean
+    key? : boolean,
+    relation? : RelationClass
 }
 
 export class ModelPropertyData {
@@ -201,6 +203,7 @@ export class Model {
             let autoIncrement =  this.getFirstMetaData(propertyName, MetaDataTypes.autoIncrement);
             let index = this.getFirstMetaData(propertyName, MetaDataTypes.index);
             let key = this.getFirstMetaData(propertyName, MetaDataTypes.key);
+            let relation = this.getFirstMetaData(propertyName, MetaDataTypes.relation);
             return new ModelPropertyData(
                 propertyName,
                 this[propertyName],
@@ -208,7 +211,8 @@ export class Model {
                     validations : this.getMetaData(propertyName, MetaDataTypes.validation),
                     autoIncrement : (autoIncrement) ? autoIncrement.value : false,
                     index : (index) ? index.value : false,
-                    key : (key) ? key.value : false
+                    key : (key) ? key.value : false,
+                    relation : (relation) ? relation.value : null
                  }
             )
         }
@@ -225,7 +229,7 @@ export class Model {
      * @param data and key / value object with the data
      * @throws throws an validation error if the data is not valid
      */
-    public async create(data : any) : Promise<boolean> {
+    public async create(data : any) : Promise<string | number> {
         try {
             let validation = await this.validate(data);
             if(!validation.isValid) {

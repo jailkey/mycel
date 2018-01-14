@@ -5,7 +5,8 @@ export enum MetaDataTypes {
     presentation = 'presentation',
     index = 'index',
     autoIncrement = 'autoIncrement',
-    key = 'key'
+    key = 'key',
+    relation = 'relation'
 }
 
 export interface MetaData {
