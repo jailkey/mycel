@@ -77,6 +77,7 @@ export class StorageQuery {
         this.nextCondition.filter = filter;
         this.nextCondition.child = {};
         this.nextCondition = this.nextCondition.child;
+        return this;
     }
     
 
@@ -85,6 +86,7 @@ export class StorageQuery {
         this.nextCondition.filter = filter;
         this.nextCondition.child = {};
         this.nextCondition = this.nextCondition.child;
+        return this;
     }
 
     public or(filter : any){
@@ -92,6 +94,7 @@ export class StorageQuery {
         this.nextCondition.filter = filter;
         this.nextCondition.child = {};
         this.nextCondition = this.nextCondition.child;
+        return this;
     }
 
 

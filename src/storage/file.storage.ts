@@ -81,7 +81,7 @@ export class FileStorage implements Storage {
         return new Promise((resolve, reject) => {
             try {
                 if(this.options.permissions.write){
-                    writeFile(this.getFilePath(), JSON.stringify(data), (err) => {
+                    writeFile(this.getFilePath(), JSON.stringify(data, null, 2), (err) => {
                         if(err){
                             reject(err);
                             return;
@@ -102,10 +102,10 @@ export class FileStorage implements Storage {
             return 0;
         }
         let result = fileData.reduce((previous, current) => {
-
             return (previous[property] > current[property]) ? previous : current;
         });
-        return result[property]++;
+        let increment = result[property];
+        return ++increment;
     }
 
     private findKey(resourceId : ResourceAccessKey, data : Array<any>){
@@ -130,9 +130,11 @@ export class FileStorage implements Storage {
             let savedData = {};
             let fileData = await this.readFile();
             for(let property of data){
-                savedData[property.name] = (property.autoIncrement) 
+                let value = (property.autoIncrement) 
                     ? this.autoIncrement(fileData, property.name)
                     : property.value
+
+                savedData[property.name] = value;
             }
             fileData.push(savedData);
             await this.writeFile(fileData);
@@ -224,4 +226,5 @@ export class FileStorage implements Storage {
     public async query(query : any){
         return [];
     }
+
 }

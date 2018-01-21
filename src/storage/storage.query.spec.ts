@@ -11,7 +11,10 @@ describe('StorageQuery', () => {
         it('use create and test if it is in the query chain.', () => {
             query.create()
             expect(query.getQuery().action).toBe('create');
+        })
 
+        it('tries to use a second create.', () => {
+            expect(() => query.create()).toThrowError();
         })
     })
 
@@ -33,7 +36,6 @@ describe('StorageQuery', () => {
         it('use and method to or a child condition.', () => {
             query.or((data) => data.lastname === 'Dieter');
             expect(query.getQuery().condition.child.child.type).toBe(QueryConditionTypes.or);
-            console.log("or", query.getQuery().condition.child.child.type)
         })
     })
 })

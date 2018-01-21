@@ -8,7 +8,7 @@ import { PropertyValidationMessageList, ValidationResult } from './model.validat
 import { ModelValidationError } from './model.validation.error';
 import { ResourceAccessKey } from '../storage/storage';
 import { CommandManager } from '../command/command.manager';
-import { RelationClass } from '../relation/relation';
+import { ModelRelation } from '../relation/relation';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
@@ -16,7 +16,7 @@ export interface ModelPropertyDataOptions {
     index? : boolean
     autoIncrement? : boolean
     key? : boolean,
-    relation? : RelationClass
+    relation? : ModelRelation
 }
 
 export class ModelPropertyData {
@@ -28,6 +28,7 @@ export class ModelPropertyData {
             this.index = options.index || false;
             this.autoIncrement = options.autoIncrement || false;
             this.key = options.key || false;
+            this.relation = options.relation || null;
         }
     }
     public name : string;
@@ -36,7 +37,8 @@ export class ModelPropertyData {
     public presentation : any;
     public index : boolean = false;
     public autoIncrement : boolean = false;
-    public key : boolean = false; 
+    public key : boolean = false;
+    public relation : ModelRelation = null;
 }
 
 export interface UpdateData {
@@ -102,7 +104,7 @@ export class Model {
         })
     }
 
-    private async getKeys() {
+    public async getKeys() {
         let properties = await this.properties();
         let keys = properties
             .filter((current) => current.key)
@@ -112,6 +114,15 @@ export class Model {
             throw new Error('No Keys for model "' + this.constructor.name + "' specified!")
         }
         return keys;
+    }
+
+    public async getRelations() {
+        let properties = await this.properties();
+        let relations = properties
+            .filter((current) => current.relation)
+            .map((current) => current.name);
+      
+        return relations;
     }
 
     /**
@@ -147,6 +158,8 @@ export class Model {
     private async convertToModelPropertyData(data : any){
         let output : Array<ModelPropertyData> = [];
         let properties = await this.properties();
+        let relations = await this.getRelations();
+      
         for(let i = 0; i < properties.length; i++){
             if(data.hasOwnProperty(properties[i].name)){
                 properties[i].value = data[properties[i].name];
@@ -159,7 +172,6 @@ export class Model {
         try {
             let output : ResourceAccessKey = {};
             let keys = await this.getKeys();
-    
             for(let key of keys){
                 if(!data.hasOwnProperty(key)){
                     throw new Error('Can not convert data to RessourceAccessKey, because the data has not property "' + key + '"');
@@ -240,6 +252,12 @@ export class Model {
                 )
             }
             let propertyData = await this.convertToModelPropertyData(data);
+            //create relations
+            for(let i = 0; i < propertyData.length; i++){
+                if(propertyData[i].relation){
+                    propertyData[i].value = await propertyData[i].relation.create(data[propertyData[i].name]);
+                }
+            }
             let result = await this.__storage.create(propertyData);
             return result;
         }catch(e){
@@ -255,10 +273,53 @@ export class Model {
         try {
             let accessKey = await this.convertToResourceAccessKey(resource);
             let result = await this.__storage.read(accessKey);
+            if(!result){
+                return null;
+            }
+
+            let propertyData = await this.convertToModelPropertyData(result);
+            //read relations
+            for(let i = 0; i < propertyData.length; i++){
+                if(propertyData[i].relation){
+                    result[propertyData[i].name] = await propertyData[i].relation.read(result[propertyData[i].name]);
+                }
+            }
+
             return result;
         }catch(e){
             throw e;
         }
+    }
+
+    private removeModelKeys(data : any){
+        let output = {};
+        for(let prop in data){
+            if(data.hasOwnProperty(prop)){
+                let key = (~prop.indexOf('.')) ? prop.split('.')[1] : prop;
+                output[key] = data[prop];
+            }
+        }
+        return output;
+    }
+
+    private updateData(target : any, newData : any){
+        newData = this.removeModelKeys(newData);
+        for(let prop in newData){
+            if(newData.hasOwnProperty(prop)){
+                if(Array.isArray(newData[prop])){
+                    throw new Error("Array is not implemented");
+                    /*
+                    for(let i = 0; i < newData[prop].length; i++){
+                        
+                    }*/
+                }else if(typeof newData[prop] === 'object'){
+                    target[prop] = this.updateData(target[prop], newData[prop]);
+                }else{
+                    target[prop] = newData[prop];
+                }
+            }
+        }
+        return target;
     }
 
     /**
@@ -267,15 +328,16 @@ export class Model {
      * @param data 
      * @throws throws an ModelValidationError if the data is not valid
      */
-    public async update(resource : any, data : any) : Promise<any> {
+    public async update(resource : any, data : any) : Promise<boolean> {
         try {
+
             let accessKey = await this.convertToResourceAccessKey(resource);
             let currentData = await this.read(accessKey);
-            for(let prop in data){
-                if(data.hasOwnProperty(prop)){
-                    currentData[prop] = data[prop];
-                }
+            if(!currentData){
+                return false;
             }
+
+            currentData = this.updateData(currentData, data);
             let validation = await this.validate(currentData);
             if(!validation.isValid) {
                 throw new ModelValidationError(
@@ -284,7 +346,13 @@ export class Model {
                     validation
                 )
             }
+            
             let propertyData = await this.convertToModelPropertyData(currentData);
+            for(let i = 0; i < propertyData.length; i++){
+                if(propertyData[i].relation){
+                    propertyData[i].value = await propertyData[i].relation.update(currentData[propertyData[i].name]);
+                }
+            }
             return this.__storage.update(accessKey, propertyData);
         }catch(e){
             throw e;
@@ -298,6 +366,14 @@ export class Model {
     public async remove(resource : any) : Promise<any> {
         try {
             let accessKey = await this.convertToResourceAccessKey(resource);
+            let result = await this.__storage.read(accessKey);
+            let propertyData = await this.convertToModelPropertyData(result);
+            //delete relations
+            for(let i = 0; i < propertyData.length; i++){
+                if(propertyData[i].relation){
+                    propertyData[i].value = await propertyData[i].relation.remove(result[propertyData[i].name]);
+                }
+            }
             return this.__storage.remove(accessKey);
         }catch(e){
             throw e;

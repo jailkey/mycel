@@ -9,22 +9,6 @@ import { Require } from '../validation/validations/require';
 import { Key } from './model.key.decorator';
 import { Relation, RelationTypes } from '../relation/relation';
 
-@ModelOptions({
-    storage : new FileStorage({
-        path : './tmp',
-        name : 'my_sublist',
-        permissions : new StoragePermissions(true, true)
-    })
-})
-class RelationModel extends Model {
-
-    @Key
-    @AutoIncrement
-    public id : number = 0;
-
-    public someKey : string = '';
-}
-
 
 @ModelOptions({
     storage : new FileStorage({
@@ -49,8 +33,6 @@ class MyDecoratedTestModel extends Model {
     @Validation(Require)
     public lastName : string = null;
 
-   // @Relation(RelationModel, [ 'id' ], RelationTypes.M2N)
-    public someEntries : Array<any> = [];
 }
 
 
@@ -117,13 +99,9 @@ describe('@ModelOptions', () => {
         })
 
         it('tries to update a non existing value', async (done) => {
-            try {
-                let result = await model.update({ id : 10 }, { firstName : 'Dieter'});
-            }catch(e){
-                expect(e.message).toBe("Cannot set property 'firstName' of undefined");
-                done();
-            }
-            
+            let result = await model.update({ id : 10 }, { firstName : 'Dieter'});
+            expect(result).toBeFalsy();
+            done();
         })
     })
 
