@@ -7,7 +7,8 @@ import { Index } from '../model/model.index.decorator';
 import { Validation } from '../model/model.validation.decorator';
 import { Require } from '../validation/validations/require';
 import { Key } from '../model/model.key.decorator';
-import { Relation, RelationTypes, ModelRelation, LinkTypes} from '../relation/relation';
+import { Relation, ModelRelation } from './relation';
+import { RelationTypes, LinkTypes} from './relation.types';
 
 @ModelOptions({
     storage : new FileStorage({
@@ -46,6 +47,25 @@ class RelationModel extends Model {
 }
 
 
+@ModelOptions({
+    storage : new FileStorage({
+        path : './tmp',
+        name : 'my_relation_model_one_two_n_deep_test',
+        permissions : new StoragePermissions(true, true)
+    })
+})
+class RelationModelOneTwoN extends Model {
+
+    @Key
+    @AutoIncrement
+    public id : number = 0;
+
+    public oneTwoNKey : string = '';
+
+    public somethingElse : string = '';
+}
+
+
 
 @ModelOptions({
     storage : new FileStorage({
@@ -56,9 +76,7 @@ class RelationModel extends Model {
 })
 class MyDecoratedRelationTestModel extends Model {
 
-    constructor(){
-        super();
-    }
+    constructor(){super();}
 
     @Key
     @AutoIncrement
@@ -74,6 +92,13 @@ class MyDecoratedRelationTestModel extends Model {
     @Relation(RelationModel, { type : RelationTypes.one2one, linking : LinkTypes.deep })
     public relationProperty : ModelRelation = null;
 
+    @Relation(RelationModelOneTwoN, { 
+        type : RelationTypes.one2n, 
+        linking : LinkTypes.deep,
+        relationKeys : [ 'oneTwoNKey' ]
+    })
+    public oneTwoNRelation : ModelRelation = null;
+
 }
 
 describe('@Relation', () => {
@@ -82,7 +107,7 @@ describe('@Relation', () => {
         model = new MyDecoratedRelationTestModel();
     })
 
-    describe('test one2one relation with subrelation and deep linking.', () => {
+    xdescribe('test one2one relation with subrelation and deep linking.', () => {
 
         it('adds some data to the model.', async(done) => {
             let result = await model.create({
@@ -93,7 +118,17 @@ describe('@Relation', () => {
                     'RelationModel.subRelation' : {
                         'SubRealationMolde.subKey' : 'some other thing'
                     }
-                }
+                },
+                oneTwoNRelation : [
+                    {
+                        oneTwoNKey : 'mykey',
+                        somethingElse : 'first entry'
+                    },
+                    {
+                        oneTwoNKey : 'mykey',
+                        somethingElse : 'second entry'
+                    }
+                ]
             });
             done();
         })

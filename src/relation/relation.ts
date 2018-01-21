@@ -1,25 +1,8 @@
 import { Model } from '../model/model';
 import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';
 import { MetaData, MetaDataTypes } from '../meta/meta.data';
+import { RelationKeyTypes, RelationTypes, LinkTypes } from './relation.types';
 
-export enum RelationTypes {
-    one2one = 'one2one',
-    one2n = 'one2n',
-    m2n = 'm2n'
-}
-
-export enum RelationKeyTypes {
-    list = 'List',
-    auto = 'Auto'
-}
-
-export enum LinkTypes {
-    deep = 'deep', //deletes relations / creates new entries in related table
-    reference = 'reference', //create only references 
-    auto = 'auto' //checks automaticly how to handle the relation
-}
-
-export const AutoRelation : string = 'AutoRelation';
 
 export interface RelationLinks {
     read : LinkTypes,
@@ -62,6 +45,10 @@ export class ModelRelation {
             });
         }else{
             this.targets = [new target()];
+        }
+
+        if(definition.type === RelationTypes.one2n && !definition.relationKeys){
+            throw new Error('A relation from type one2n needs a relation keys definition.');
         }
         
         this.definition = definition;
@@ -144,7 +131,12 @@ export class ModelRelation {
      * @param target 
      */
     private async getKeyValueReference(data : any, target : Model){
-        let keys = await target.getKeys();
+        let keys;
+        if(this.definition.relationKeys){
+            keys = this.definition.relationKeys; 
+        }else{
+            keys = await target.getKeys();
+        }
         let values = {};
         let modelName = target.getName();
         keys.forEach(key => {
@@ -198,14 +190,12 @@ export class ModelRelation {
      * @param data 
      */
     public async create(data : any){
-
+        let target, isReference, keyValueReference;
         switch(this.definition.type){
             case RelationTypes.one2one:
-            case RelationTypes.one2n:
-                let target = this.getTarget(data);
+                target = this.getTarget(data);
                 data = this.removeModelKeys(data);
-                let isReference = await this.isCreatLinkReference(data, this.definition.linkings.create, target);
-                let keyValueReference;
+                isReference = await this.isCreatLinkReference(data, this.definition.linkings.create, target);
                 if(isReference){
                     keyValueReference = await this.getKeyValueReference(data, target);
                 }else{
@@ -213,18 +203,25 @@ export class ModelRelation {
                     keyValueReference = await this.getKeyValueReference(result, target);
                 }
                 return keyValueReference;
-            case RelationTypes.m2n:
-            /*
-                if(isReference){
-                    let keyValueReference = await this.getKeyValueReference(data);
-                    this.relation.push(keyValueReference);
-                }else{
-                    let result = await this.target.create(data);
-                    let keyValueReference = await this.getKeyValueReference(result);
-                    this.relation.push(keyValueReference);
+            case RelationTypes.one2n:
+                //the relation key(s) shouldn't be autoindex
+                if(!Array.isArray(data)){
+                    throw new Error('Data of one2n relation must be an array!')
                 }
-                return this.relation;
-                */
+                target = this.getTarget(data[0]);
+                data = data.map(this.removeModelKeys.bind(this));
+                isReference = await this.isCreatLinkReference(data[0], this.definition.linkings.create, target);
+                keyValueReference = await this.getKeyValueReference(data[0], target);
+                if(!isReference){
+                    for(let entry of data){
+                        let result = await target.create(entry);
+                        console.log("CREATE RESULT -->", result)
+                    }
+                }
+                return keyValueReference;
+            case RelationTypes.m2n:
+               
+            
             default: 
                 throw new Error('Relation method "create" is not implemented for type "' + this.definition.type + '"');
         }

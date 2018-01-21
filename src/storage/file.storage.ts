@@ -2,6 +2,7 @@ import { Storage, ResourceAccessKey } from './storage';
 import { exists, open, readFile, writeFile } from 'fs';
 import { StoragePermissions } from './storage.permissions';
 import { ModelPropertyData, Model } from '../model/model';
+import { QueryActions, QueryConditionTypes, QueryDescription, QueryCondition, StorageQuery} from './storage.query';
 
 
 export interface FileStoreOptions {
@@ -223,7 +224,53 @@ export class FileStorage implements Storage {
         }
     }
 
-    public async query(query : any){
+    private createFilter(query : QueryCondition, filter = [], filterIndex = 0){
+        if(!filter.length){
+            filter[filterIndex] = [];
+        }
+        if(query.filter && (!query.type || query.type === QueryConditionTypes.and)){
+            filter[filterIndex].push(query.filter);
+        }
+        if(query.filter && (query.type && query.type === QueryConditionTypes.or)){
+            filterIndex++;
+            filter[filterIndex] = [];
+            filter[filterIndex].push(query.filter)
+        }
+        if(query.child){
+            return this.createFilter(query.child, filter, filterIndex);
+        }
+
+        return filter;
+    }
+
+    private executeFilter(data : Array<any>, filter : Array<Array<Function>>){
+        return data.filter((entry) => {
+            for(let i = 0; i < filter.length; i++){
+                let result = true;
+                for(let y = 0; y < filter[i].length; y++){
+                    if(!(filter[i][y](entry))){
+                        result = false;
+                        break;
+                    }
+                }
+                if(result){
+                    return result;
+                }
+            }
+            return false;
+        })
+            
+    }
+
+    public async query(storageQuery : StorageQuery){
+        let fileData = await this.readFile();
+        let query = storageQuery.getQuery();
+        switch(query.action){
+            case QueryActions.read:
+                let filter = this.createFilter(query.condition);
+                let result = this.executeFilter(fileData, filter);
+                return result;
+        }
         return [];
     }
 

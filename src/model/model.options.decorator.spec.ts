@@ -7,7 +7,8 @@ import { Index } from './model.index.decorator';
 import { Validation } from './model.validation.decorator';
 import { Require } from '../validation/validations/require';
 import { Key } from './model.key.decorator';
-import { Relation, RelationTypes } from '../relation/relation';
+import { Relation } from '../relation/relation';
+import { RelationTypes } from '../relation/relation.types';
 
 
 @ModelOptions({

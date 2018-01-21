@@ -1,6 +1,7 @@
 import { FileStorage, FileStoreOptions} from './file.storage';
 import { StoragePermissions } from './storage.permissions';
-import { ModelPropertyData } from '../model/model'
+import { ModelPropertyData } from '../model/model';
+import { StorageQuery } from './storage.query';
 
 describe("FileStore", () => {
     let store;
@@ -22,6 +23,13 @@ describe("FileStore", () => {
                 new ModelPropertyData('lastname', 'Peter')
             ]
             await store.create(entry);
+
+            let anotherEntry : Array<ModelPropertyData> = [
+                new ModelPropertyData('id', null, { autoIncrement : true, index : true }),
+                new ModelPropertyData('name', 'Klaus'),
+                new ModelPropertyData('lastname', 'Dieter')
+            ]
+            await store.create(anotherEntry);
             done();
         })
     })
@@ -45,10 +53,46 @@ describe("FileStore", () => {
         })
     })
 
+    describe('query()', () => {
+        it('executes a query with read command', async () => {
+            
+            let query = new StorageQuery();
+
+            let result = await store.query(
+                query
+                    .read()
+                    .where((data) => data.name === 'Testmann')
+                    .and((data) => data.lastname == 'Peter')
+            );
+            
+            expect(result.length).toBe(1);
+            expect(result[0].name).toBe('Testmann');
+
+            
+            let secondQuery = new StorageQuery();
+
+            let secondResult = await store.query(
+                secondQuery
+                    .read()
+                    .where((data) => data.name === 'Testmann')
+                    .or((data) => data.name === 'Klaus')
+            );
+
+            console.log("second result", secondResult);
+
+            expect(secondResult.length).toBe(2);
+            expect(secondResult[0].name).toBe('Testmann');
+            expect(secondResult[1].name).toBe('Klaus');
+        })
+    })
+
     describe('reset()', () => {
         it('resets the store', async (done) => {
             let result = await store.reset();
             done();
         })
     })
+
+
+    
 })

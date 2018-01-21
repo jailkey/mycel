@@ -73,7 +73,7 @@ export class StorageQuery {
         return this;
     }
 
-    public where(filter : any){
+    public where(filter : Function){
         this.nextCondition.filter = filter;
         this.nextCondition.child = {};
         this.nextCondition = this.nextCondition.child;
@@ -81,7 +81,7 @@ export class StorageQuery {
     }
     
 
-    public and(filter : any){
+    public and(filter : Function){
         this.nextCondition.type = QueryConditionTypes.and;
         this.nextCondition.filter = filter;
         this.nextCondition.child = {};
@@ -89,7 +89,7 @@ export class StorageQuery {
         return this;
     }
 
-    public or(filter : any){
+    public or(filter : Function){
         this.nextCondition.type = QueryConditionTypes.or;
         this.nextCondition.filter = filter;
         this.nextCondition.child = {};
