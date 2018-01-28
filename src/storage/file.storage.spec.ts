@@ -54,7 +54,7 @@ describe("FileStore", () => {
     })
 
     describe('query()', () => {
-        it('executes a query with read command', async () => {
+        it('executes a query with read command and "and" condition!', async () => {
             
             let query = new StorageQuery();
 
@@ -67,8 +67,9 @@ describe("FileStore", () => {
             
             expect(result.length).toBe(1);
             expect(result[0].name).toBe('Testmann');
+        })
 
-            
+        it('executes a query with read command and "or" condition', async () => {  
             let secondQuery = new StorageQuery();
 
             let secondResult = await store.query(
@@ -78,11 +79,29 @@ describe("FileStore", () => {
                     .or((data) => data.name === 'Klaus')
             );
 
-            console.log("second result", secondResult);
-
             expect(secondResult.length).toBe(2);
             expect(secondResult[0].name).toBe('Testmann');
             expect(secondResult[1].name).toBe('Klaus');
+        })
+
+        it('executes a read query by with a list', async (done) => {
+            let myQuery = new StorageQuery();
+            let result = await(store.query(
+                myQuery
+                    .read()
+                    .list([
+                        {
+                            name : 'Testmann'
+                        },
+                        {
+                            name : 'Klaus'
+                        }
+                    ])
+            ));
+            expect(result.length).toBe(2);
+            expect(result[0].name).toBe('Testmann');
+            expect(result[1].name).toBe('Klaus');
+            done()
         })
     })
 

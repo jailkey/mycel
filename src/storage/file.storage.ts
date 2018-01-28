@@ -243,7 +243,35 @@ export class FileStorage implements Storage {
         return filter;
     }
 
-    private executeFilter(data : Array<any>, filter : Array<Array<Function>>){
+    private createListCondition(listData : Array<any>){
+        let output : QueryCondition = {};
+        for(let listEntry of listData){
+            let condition: QueryCondition = {};
+            condition.type = QueryConditionTypes.or;
+            condition.filter = (entry) => {
+                let result = false;
+                for(let prop in listEntry){
+                    if(listEntry.hasOwnProperty(prop)){
+                        if(entry[prop] === listEntry[prop]){
+                            result = true;
+                        }else{
+                            return false;
+                        }
+                    }
+                }
+                return result;
+            }
+            if(output.child){
+                output.child = condition
+                output = output.child;
+            }else{
+                output = condition;
+            }
+        }
+        return output;
+    }
+
+    private readFiltered(data : Array<any>, filter : Array<Array<Function>>){
         return data.filter((entry) => {
             for(let i = 0; i < filter.length; i++){
                 let result = true;
@@ -262,14 +290,34 @@ export class FileStorage implements Storage {
             
     }
 
+    private updateFiltered(data : Array<any>, filter : Array<Array<Function>>){
+        let updated = [];
+        for(let i = 0; i < data.length; i++){
+            for(let y = 0; y < filter.length; y++){
+                for(let x = 0; x < filter[y].length; x++){
+                    if(!(filter[i][y](data[i]))){
+
+                    }
+                }
+            }
+        }
+    }
+
     public async query(storageQuery : StorageQuery){
         let fileData = await this.readFile();
         let query = storageQuery.getQuery();
+
         switch(query.action){
             case QueryActions.read:
-                let filter = this.createFilter(query.condition);
-                let result = this.executeFilter(fileData, filter);
+                let condition = (query.list && query.list.length)
+                    ? this.createListCondition(query.list)
+                    : query.condition
+              
+                let filter = this.createFilter(condition);
+                let result = this.readFiltered(fileData, filter);
                 return result;
+            case QueryActions.update:
+
         }
         return [];
     }

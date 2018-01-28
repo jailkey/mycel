@@ -9,6 +9,8 @@ import { ModelValidationError } from './model.validation.error';
 import { ResourceAccessKey } from '../storage/storage';
 import { CommandManager } from '../command/command.manager';
 import { ModelRelation } from '../relation/relation';
+import { StorageQuery, QueryActions } from '../storage/storage.query';
+import { RelationTypes } from '../relation/relation.types';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
@@ -231,9 +233,77 @@ export class Model {
         return null;
     }
 
- 
-    public async query(query : any) : Promise<any> {
+    private getQueryFilterFromData(data : Array<any>){
+        return (entry) => {
+            for(let i = 0; i < data.length; i++){
+                let result = false;
+                for(let prop in data[i]){
+                    if(data[i].hasOwnProperty(prop)){
+                        result = (entry[prop] === data[i][prop]);
+                    }
+                }
+                if(result){
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
+    private createRealtionQuery(data : Array<any>, type : QueryActions){
+        let query = new StorageQuery();
+        switch(type){
+            case QueryActions.read:
+                return query
+                        .read()
+                        .list(data);
+        }
+    
+    }
+
+    private mergeResult(result : Array<any>, data : Array<any>, property : string){
+        for(let i = 0; i < result.length; i++){
+            result[i][property] = data[i];
+        }
+        return result;
+    }
+
+    private async readQueryRelation(relation : any, result : any, propertyName : string){
+        let realtionsValues = result.map((current) => {
+            return current[propertyName];
+        });
+
+        let relationResult = await relation.query(
+            this.createRealtionQuery(realtionsValues, QueryActions.read)
+        );
+        return this.mergeResult(result, relationResult, propertyName);
+    }
+ 
+    public async query(storageQuery : StorageQuery) : Promise<any> {
+        try {
+            let queryResult = storageQuery.getQuery();
+            switch(queryResult.action){
+                //read query
+                case QueryActions.read:
+                    let result = await this.__storage.query(storageQuery);
+                    if(result.length){
+                        let propertyData = await this.convertToModelPropertyData(result[0]);
+                        for(let i = 0; i < propertyData.length; i++){
+                            if(propertyData[i].relation){
+                                result = await this.readQueryRelation(propertyData[i].relation, result, propertyData[i].name);
+                            }
+                        }
+                    }
+                    return result;
+                case QueryActions.update:
+                    
+                default:
+                    throw new Error('model query method "' + queryResult.action + '" is not implemented.')    
+            }
+            
+        }catch(e){
+            throw e;
+        }
     }
 
     /**
@@ -271,6 +341,7 @@ export class Model {
      */
     public async read(resource : any) : Promise<any> {
         try {
+            
             let accessKey = await this.convertToResourceAccessKey(resource);
             let result = await this.__storage.read(accessKey);
             if(!result){
@@ -336,7 +407,6 @@ export class Model {
             if(!currentData){
                 return false;
             }
-
             currentData = this.updateData(currentData, data);
             let validation = await this.validate(currentData);
             if(!validation.isValid) {

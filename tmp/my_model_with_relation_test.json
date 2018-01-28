@@ -1,0 +1,167 @@
+[
+  {
+    "id": 0,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 1,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 2,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 3,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 4,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 5,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 6,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 7,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 8,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 9,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 10,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 11,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 12,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 13,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  },
+  {
+    "id": 14,
+    "firstName": "Hans",
+    "lastName": "Peter",
+    "relationProperty": {
+      "RelationModel.id": 0
+    },
+    "oneTwoNRelation": {
+      "RelationModelOneTwoN.oneTwoNKey": "mykey"
+    }
+  }
+]

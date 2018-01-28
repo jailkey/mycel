@@ -63,6 +63,9 @@ class RelationModelOneTwoN extends Model {
     public oneTwoNKey : string = '';
 
     public somethingElse : string = '';
+
+    @Relation(SubRelationModel, { type : RelationTypes.one2one, linking : LinkTypes.deep })
+    public subRelation : ModelRelation = null;
 }
 
 
@@ -140,7 +143,9 @@ describe('@Relation', () => {
             expect(result.lastName).toBe('Peter');
             expect(result.relationProperty.id).toBe(0);
             expect(result.relationProperty.someKey).toBe('something');
-            expect(result.relationProperty.subRelation.subKey).toBe('some other thing')
+            expect(result.relationProperty.subRelation.subKey).toBe('some other thing');
+            expect(Array.isArray(result.oneTwoNRelation)).toBeTruthy();
+            expect(result.oneTwoNRelation[0].oneTwoNKey).toBe('mykey');
             done()
         })
 

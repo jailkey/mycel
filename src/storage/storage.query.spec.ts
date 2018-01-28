@@ -26,16 +26,34 @@ describe('StorageQuery', () => {
     })
 
     describe('and()', () => {
-        it('use and method to add a child condition.', () => {
+        it('use "and" method to add a child condition.', () => {
+            console.log("AND QUERY")
             query.and((data) => data.lastname === 'Peter');
             expect(query.getQuery().condition.child.type).toBe(QueryConditionTypes.and);
         })
     })
 
     describe('or()', () => {
-        it('use and method to or a child condition.', () => {
-            query.or((data) => data.lastname === 'Dieter');
-            expect(query.getQuery().condition.child.child.type).toBe(QueryConditionTypes.or);
+        it('use "or" method to or a child condition.', () => {
+            expect(() => query.or((data) => data.lastname === 'Dieter')).toThrow();
+        })
+
+        it('creates a new query to use or.', () => {
+            query = new StorageQuery();
+        });
+    })
+
+    describe('set()', () => {
+        it('use the set method without a condition.', () => {
+            expect(() => query.set({mydata : 'test'})).toThrow()
+        })
+
+        it('use the "set" method with a condition.', () => {
+            expect(() => query.where((entry) => entry.id === '1')).toThrow();
+            query.update();
+            query.where((entry) => entry.id === '1');
+            query.set({ mydata : 'test' });
+            expect(query.getQuery().condition.data.mydata).toBe('test')
         })
     })
 })

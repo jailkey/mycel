@@ -2,6 +2,7 @@ import { Model } from '../model/model';
 import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';
 import { MetaData, MetaDataTypes } from '../meta/meta.data';
 import { RelationKeyTypes, RelationTypes, LinkTypes } from './relation.types';
+import { StorageQuery, QueryActions } from '../storage/storage.query';
 
 
 export interface RelationLinks {
@@ -35,14 +36,15 @@ export function Relation(target : typeof Model, definition : RelationDefinition)
     }
 }
 
+
 export class ModelRelation {
     constructor(model : typeof Model, target : typeof Model | Array<typeof Model>, definition : RelationDefinition){ 
         this.model = model;
 
         if(Array.isArray(target)){
-            target.forEach((current) => {
-                this.targets.push(new current());
-            });
+          
+            target.forEach(current => this.targets.push(new current()));
+            
         }else{
             this.targets = [new target()];
         }
@@ -215,7 +217,6 @@ export class ModelRelation {
                 if(!isReference){
                     for(let entry of data){
                         let result = await target.create(entry);
-                        console.log("CREATE RESULT -->", result)
                     }
                 }
                 return keyValueReference;
@@ -242,23 +243,51 @@ export class ModelRelation {
         return output;
     }
 
+    private ressourceToQuery(ressource : any, action: QueryActions) : StorageQuery{
+        let query = new StorageQuery();
+        ressource = this.removeModelKeys(ressource);
+        let count = 0;
+        switch(action) {
+            case QueryActions.read:
+                query.read();
+                break;
+            case QueryActions.update:
+                query.update();
+                break;
+            case QueryActions.remove:
+                query.remove();
+                break;
+        }
+
+        for(let prop in ressource){
+            if(ressource.hasOwnProperty(prop)){
+                if(count === 0){
+                    query.where((entry) => entry[prop] === ressource[prop]);
+                }else{
+                    query.and((entry) => entry[prop] === ressource[prop]);
+                }
+                count++;
+            }
+        }
+        return query
+    }
+
     /**
      * reads a relation ressource
      * @param ressource 
      */
     public async read(ressource : any){
+        let target, query;
         switch(this.definition.type){
             case RelationTypes.one2one:
-                let target = this.getTarget(ressource);
+                target = this.getTarget(ressource);
                 return await target.read(this.removeModelKeys(ressource));
+            case RelationTypes.one2n:
+                target = this.getTarget(ressource);
+                query = this.ressourceToQuery(ressource, QueryActions.read);
+                let result = await target.query(query);
+                return await target.query(query);
             case RelationTypes.m2n:
-                let output = [];
-                //TODO use query instead of single calls
-                /*
-                for(let relation of this.relation){
-                    let output = await this.target.read(relation);
-                }*/
-                return this.relation;
             default:
                 throw new Error('Relation method "read" is not implemented for type "' + this.definition.type + '"');
         }
@@ -339,6 +368,27 @@ export class ModelRelation {
             default:
                 throw new Error('Relation method "remove" is not implemented for type "' + this.definition.type + '"');   
         }
+    }
+
+
+    public async query(storageQuery : StorageQuery){
+        let query = storageQuery.getQuery();
+        switch(query.action){
+            case QueryActions.read:
+                if(!query.list.length){
+                    return [];
+                }
+                switch(this.definition.type){
+                    case RelationTypes.one2one:
+                    case RelationTypes.one2n:
+                        let target = this.getTarget(query.list[0]);
+                        let result = await target.query(storageQuery);
+                        return result;
+                    default:
+                        throw new Error('realtion query is not implemented for type "' + this.definition.type + '"');
+                };
+        }
+        
     }
 
 
