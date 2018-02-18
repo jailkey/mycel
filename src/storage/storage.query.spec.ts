@@ -56,4 +56,25 @@ describe('StorageQuery', () => {
             expect(query.getQuery().condition.data.mydata).toBe('test')
         })
     })
+
+    describe('copyAsReadable', () => {
+        it('creates a readable copy', () => {
+            query.and((entry) => entry.id === '2');
+            let readable = query.copyAsReadable();
+            let queryCopy = readable.getQuery();
+            console.log("queryCopy", queryCopy);
+            expect(queryCopy.action).toBe('read')
+        });
+
+    })
+    
+    describe('getChangedFields()', () => {
+        it('gets all changed fileds', () => {
+            query.where((entry) => entry.id === '1');
+            query.set({ something : 'test' });
+            let changedFields = query.getChangedFields();
+            expect(changedFields[0]).toBe('mydata');
+            expect(changedFields[1]).toBe('something');
+        })
+    })
 })

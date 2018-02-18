@@ -7,9 +7,9 @@ export interface ResourceAccessKey {
 
 export interface Storage {
     create(data : Array<ModelPropertyData>) : Promise<any>
-    read(resourceId : ResourceAccessKey) : Promise<any>
-    update(resourceId : ResourceAccessKey, data : Array<ModelPropertyData>) : Promise<boolean>
-    remove(resourceId : ResourceAccessKey) : Promise<boolean>
+    read(resourceId : ResourceAccessKey | Function) : Promise<any>
+    update(resourceId : ResourceAccessKey | Function, data : Array<ModelPropertyData>) : Promise<boolean>
+    remove(resourceId : ResourceAccessKey | Function) : Promise<boolean>
     query(query : StorageQuery) : Promise<Array<any>>
 }
 

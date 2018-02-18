@@ -11,6 +11,9 @@ import { AutoIncrement } from '../model/model.autoincrement.decorator';
 import { FileStorage } from '../storage/file.storage';
 import { StoragePermissions } from '../storage/storage.permissions';
 
+
+
+
 @ModelOptions({
     storage : new FileStorage({
         path : './tmp',
@@ -25,6 +28,8 @@ class MyTestModel extends Model {
     public id : number = 0;
 
     public myTestPropery : string = null;
+
+    
 }
 
 @ControllerOptions({
@@ -40,6 +45,7 @@ class TestController extends Controller {
     public async myTestControllerMethod(test : string) {
         return 'controller' + test
     }
+
 }
 
 @MicroService({

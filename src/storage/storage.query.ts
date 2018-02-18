@@ -1,3 +1,5 @@
+import { ModelPropertyData } from '../model/model';
+
 export enum QueryActions {
     create = 'create',
     read = 'read',
@@ -85,7 +87,7 @@ export class StorageQuery {
         return this;
     }
 
-    public set(data) {
+    public set(data : ModelPropertyData | Array<ModelPropertyData>) {
         if(
             this.query.action !== QueryActions.create 
             && this.query.action !== QueryActions.update
@@ -153,5 +155,64 @@ export class StorageQuery {
 
     public getQuery() : QueryDescription {
         return this.query;
+    }
+
+    public async modify(callback : Function, condition?){
+        let output = [];
+        if(!condition){
+            this.query.condition = await callback(this.query.condition);
+            condition = this.query.condition;
+        }else{
+            condition = await callback(condition);
+        }
+        if(condition.child && Object.keys(condition.child).length) {
+            condition.child = await this.modify(callback, condition.child);
+        }
+        return condition;
+    }
+
+    public getChangedFields(){
+        let getField = (condition, collected = []) => {
+            if(condition.data){
+                for(let prop in condition.data){
+                    if(condition.data.hasOwnProperty(prop)){
+                        collected.push(prop);
+                    }
+                }
+            }
+            if(condition.child){
+                collected = collected.concat(getField(condition.child, collected))
+            }
+            return collected;
+        }
+        let output = getField(this.query.condition);
+        return output.filter((current, index) => output.indexOf(current) === index);
+    }
+
+    public copyAsReadable(){
+        let newQuery = new StorageQuery();
+        newQuery.read();
+
+        let addConditions = (query, condition) => {
+            if(condition.filter){
+                switch(condition.type) {
+                    case QueryConditionTypes.and:
+                        query.and(condition.filter);
+                        break;
+                    case QueryConditionTypes.or:
+                        query.or(condition.filter);
+                        break;
+                    default:
+                        query.where(condition.filter);
+                        break;
+                }
+            }
+            
+            if(condition.child){
+                query = addConditions(query, condition.child);
+            }
+            return query;
+        }
+        return addConditions(newQuery, this.query.condition)
     }
 }

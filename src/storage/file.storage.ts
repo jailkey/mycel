@@ -2,7 +2,7 @@ import { Storage, ResourceAccessKey } from './storage';
 import { exists, open, readFile, writeFile } from 'fs';
 import { StoragePermissions } from './storage.permissions';
 import { ModelPropertyData, Model } from '../model/model';
-import { QueryActions, QueryConditionTypes, QueryDescription, QueryCondition, StorageQuery} from './storage.query';
+import { QueryActions, QueryConditionTypes, QueryDescription, QueryCondition, StorageQuery } from './storage.query';
 
 
 export interface FileStoreOptions {
@@ -10,7 +10,6 @@ export interface FileStoreOptions {
     name : string,
     permissions : StoragePermissions
 }
-
 
 export class FileStorage implements Storage {
     constructor(options : FileStoreOptions){
@@ -109,37 +108,55 @@ export class FileStorage implements Storage {
         return ++increment;
     }
 
-    private findKey(resourceId : ResourceAccessKey, data : Array<any>){
+    private findKey(resource : ResourceAccessKey | Function, data : Array<any>){
         return data.find((current : any) => {
             let found = true;
-            for(let key of Object.keys(resourceId)){
-                if(current[key] !== resourceId[key]){
-                    found = false;
+            if(typeof resource === 'function'){
+                found = resource(current);
+            }else{
+                for(let key of Object.keys(resource)){
+                    if(current[key] !== resource[key]){
+                        found = false;
+                    }
                 }
             }
+            
             return found;
         })
     }
 
+    private async addData(data, enty){
+        let savedData = {};
+        for(let property of enty){
+            let value = (property.autoIncrement) 
+                ? this.autoIncrement(data, property.name)
+                : property.value
+
+            savedData[property.name] = value;
+        }
+        data.push(savedData);
+        return savedData;
+    }
 
     /**
      * creates a new entry with the given data
      * @param data 
      */
-    public async create(data : Array<ModelPropertyData>) {
+    public async create(data : Array<ModelPropertyData> | Array<Array<ModelPropertyData>>) {
         try {
-            let savedData = {};
+            
             let fileData = await this.readFile();
-            for(let property of data){
-                let value = (property.autoIncrement) 
-                    ? this.autoIncrement(fileData, property.name)
-                    : property.value
-
-                savedData[property.name] = value;
+            let output;
+            if(Array.isArray(data[0])){
+                output = [];
+                for(let entry of data){
+                    output.push(this.addData(fileData, entry));
+                }
+            }else{
+                output = this.addData(fileData, data);
             }
-            fileData.push(savedData);
             await this.writeFile(fileData);
-            return savedData;
+            return output;
         }catch(e){
             throw e;
         }
@@ -149,13 +166,17 @@ export class FileStorage implements Storage {
      * reads an entry by the resource RessourceAccessKey
      * @param resourceId 
      */
-    public async read(resourceId : ResourceAccessKey){
+    public async read(ressource : ResourceAccessKey | Function){
         try {
             let fileData = await this.readFile();
-            return this.findKey(resourceId, fileData);
+            return this.findKey(ressource, fileData);
         }catch(e){
             throw e;
         }
+    }
+
+    private updateEntry(resource, data){
+       
     }
 
     /**
@@ -163,16 +184,21 @@ export class FileStorage implements Storage {
      * @param resourceId 
      * @param data 
      */
-    public async update(resourceId : ResourceAccessKey, data : Array<ModelPropertyData>){
+    public async update(resource : ResourceAccessKey | Function, data : Array<ModelPropertyData>){
         try {
             let fileData = await this.readFile();
             for(let i = 0; i < fileData.length; i++){
                 let found = true;
-                for(let key of Object.keys(resourceId)){
-                    if(fileData[i][key] !== resourceId[key]){
-                        found = false;
+                if(typeof resource === 'function'){
+                    found = resource(fileData[i]);
+                }else{
+                    for(let key of Object.keys(resource)){
+                        if(fileData[i][key] !== resource[key]){
+                            found = false;
+                        }
                     }
                 }
+                
                 if(found){
                     for(let y = 0; y < data.length; y++){
                         fileData[i][data[y].name] = data[y].value;
@@ -191,22 +217,27 @@ export class FileStorage implements Storage {
      * removes an entry by a RessourceAccessKey
      * @param resourceId 
      */
-    public async remove(resourceId : ResourceAccessKey){
+    public async remove(resource : ResourceAccessKey | Function){
         try {
             let fileData = await this.readFile();
             for(let i = 0; i < fileData.length; i++){
                 let found = true;
-                for(let key of Object.keys(resourceId)){
-                    if(fileData[i][key] !== resourceId[key]){
-                        found = false;
+                if(typeof resource === 'function'){
+                    found = resource(fileData[i]);
+                }else{
+                    for(let key of Object.keys(resource)){
+                        if(fileData[i][key] !== resource[key]){
+                            found = false;
+                        }
                     }
                 }
+                
                 if(found){
                     fileData.splice(i, 1);
-                    await this.writeFile(fileData);
-                    return true;
                 }
             }
+            await this.writeFile(fileData);
+            return true;
         }catch(e){
             throw e;
         }
@@ -229,12 +260,18 @@ export class FileStorage implements Storage {
             filter[filterIndex] = [];
         }
         if(query.filter && (!query.type || query.type === QueryConditionTypes.and)){
-            filter[filterIndex].push(query.filter);
+            filter[filterIndex].push({
+                filter : query.filter,
+                query : query
+            });
         }
         if(query.filter && (query.type && query.type === QueryConditionTypes.or)){
             filterIndex++;
             filter[filterIndex] = [];
-            filter[filterIndex].push(query.filter)
+            filter[filterIndex].push({
+                filter : query.filter,
+                query : query
+            })
         }
         if(query.child){
             return this.createFilter(query.child, filter, filterIndex);
@@ -271,12 +308,12 @@ export class FileStorage implements Storage {
         return output;
     }
 
-    private readFiltered(data : Array<any>, filter : Array<Array<Function>>){
+    private readFiltered(data : Array<any>, filter : Array<Array<any>>){
         return data.filter((entry) => {
             for(let i = 0; i < filter.length; i++){
                 let result = true;
                 for(let y = 0; y < filter[i].length; y++){
-                    if(!(filter[i][y](entry))){
+                    if(!(filter[i][y].filter(entry))){
                         result = false;
                         break;
                     }
@@ -290,34 +327,66 @@ export class FileStorage implements Storage {
             
     }
 
-    private updateFiltered(data : Array<any>, filter : Array<Array<Function>>){
+    private updateFiltered(data : Array<any>, filter : Array<Array<any>>){
         let updated = [];
+        let createData = [];
+
         for(let i = 0; i < data.length; i++){
             for(let y = 0; y < filter.length; y++){
+                let result = true;
+                let updateData, notFound;
                 for(let x = 0; x < filter[y].length; x++){
-                    if(!(filter[i][y](data[i]))){
-
+                    if(!(filter[y][x].filter(data[i]))){
+                        result = false;
+                        notFound = filter[y][x].query.data;
+                    }else{
+                        if(Array.isArray(filter[y][x].query.data)){
+                            updateData = filter[y][x].query.data.map((entry) => {
+                                let output = {};
+                                console.log("entry.name",entry.name)
+                                output[entry.name] = entry.value;
+                                return output;
+                            });
+                        }else{
+                            let output = {};
+                            console.log("filter[y][x].query.data.name", filter[y][x].query.data.name)
+                            output[filter[y][x].query.data.name] = filter[y][x].query.data.value;
+                            updateData = output;
+                        }
                     }
+                }
+                if(result){
+                    data[i] = { ...data[i], ...updateData };
+                }else{
+                    createData.push(notFound);
                 }
             }
         }
+
+        return data;
     }
+
 
     public async query(storageQuery : StorageQuery){
         let fileData = await this.readFile();
         let query = storageQuery.getQuery();
-
+        let condition, filter, result;
         switch(query.action){
             case QueryActions.read:
-                let condition = (query.list && query.list.length)
+                condition = (query.list && query.list.length)
                     ? this.createListCondition(query.list)
                     : query.condition
               
-                let filter = this.createFilter(condition);
-                let result = this.readFiltered(fileData, filter);
+                filter = this.createFilter(condition);
+                result = this.readFiltered(fileData, filter);
                 return result;
             case QueryActions.update:
-
+                condition = query.condition
+                filter = this.createFilter(condition);
+                result = this.updateFiltered(fileData, filter);
+     
+                this.writeFile(result);
+                return true;
         }
         return [];
     }

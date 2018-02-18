@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": 0,
+    "someKey": "something",
+    "subRelation": {
+      "SubRelationModel.id": 0
+    }
+  }
+]

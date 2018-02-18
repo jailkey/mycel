@@ -86,7 +86,7 @@ describe("FileStore", () => {
 
         it('executes a read query by with a list', async (done) => {
             let myQuery = new StorageQuery();
-            let result = await(store.query(
+            let result = await store.query(
                 myQuery
                     .read()
                     .list([
@@ -97,12 +97,29 @@ describe("FileStore", () => {
                             name : 'Klaus'
                         }
                     ])
-            ));
+            );
             expect(result.length).toBe(2);
             expect(result[0].name).toBe('Testmann');
             expect(result[1].name).toBe('Klaus');
             done()
         })
+
+        it('updates a query, with conditions', async (done) => {
+            let myQuery = new StorageQuery();
+            let result = await store.query(
+                myQuery
+                    .update()
+                    .where((entry) => entry.name === 'Testmann')
+                    .set(new ModelPropertyData('lastname', 'was anderes'))
+                    .or(entry => entry.name === 'Klaus')
+                    .set(new ModelPropertyData('name', 'Noch so ein Typ'))
+            )
+            let entry = await store.read({ id : 0 });
+            expect(entry.lastname).toBe('was anderes');
+            let secondEntry = await store.read({ id : 1 });
+            expect(secondEntry.name).toBe('Noch so ein Typ');
+            done();
+        });
     })
 
     describe('reset()', () => {

@@ -2,8 +2,7 @@ import { Model } from '../model/model';
 import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';
 import { MetaData, MetaDataTypes } from '../meta/meta.data';
 import { RelationKeyTypes, RelationTypes, LinkTypes } from './relation.types';
-import { StorageQuery, QueryActions } from '../storage/storage.query';
-
+import { ModelHelper } from '../model/model.helper';
 
 export interface RelationLinks {
     read : LinkTypes,
@@ -132,7 +131,7 @@ export class ModelRelation {
      * @param data 
      * @param target 
      */
-    private async getKeyValueReference(data : any, target : Model){
+    private async getKeyValueReference(data : any, target : Model) : Promise<any>{
         let keys;
         if(this.definition.relationKeys){
             keys = this.definition.relationKeys; 
@@ -151,7 +150,7 @@ export class ModelRelation {
      * returns the target from the key name
      * @param data 
      */
-    private getTarget(data : any){
+    private getTarget(data : any) : Model{
         if(this.targets.length === 1){
             return this.targets[0];
         }
@@ -242,7 +241,7 @@ export class ModelRelation {
         }
         return output;
     }
-
+/*
     private ressourceToQuery(ressource : any, action: QueryActions) : StorageQuery{
         let query = new StorageQuery();
         ressource = this.removeModelKeys(ressource);
@@ -270,6 +269,17 @@ export class ModelRelation {
             }
         }
         return query
+    }*/
+
+    private getResourceCondition(resource : any){
+        return (entry) => {
+            for(let prop in resource){
+                if(resource.hasOwnProperty(prop) && entry[prop] !== resource[prop]){
+                   return false;
+                }
+            }
+            return true;
+        }
     }
 
     /**
@@ -284,9 +294,9 @@ export class ModelRelation {
                 return await target.read(this.removeModelKeys(ressource));
             case RelationTypes.one2n:
                 target = this.getTarget(ressource);
-                query = this.ressourceToQuery(ressource, QueryActions.read);
-                let result = await target.query(query);
-                return await target.query(query);
+                //query = this.ressourceToQuery(ressource, QueryActions.read);
+                let result = await target.read(this.getResourceCondition(ressource))
+                return result;
             case RelationTypes.m2n:
             default:
                 throw new Error('Relation method "read" is not implemented for type "' + this.definition.type + '"');
@@ -315,18 +325,34 @@ export class ModelRelation {
      * @param data 
      */
     public async update(data : any){
+        let target, isReference, keyValueReference;
         switch(this.definition.type){
             case RelationTypes.one2one:
-                let target = this.getTarget(data);
-                let isReference = this.isUpdateLinkReference(data, this.definition.linkings.update, target);
+                target = this.getTarget(data);
+                isReference = this.isUpdateLinkReference(data, this.definition.linkings.update, target);
                 data = this.removeModelKeys(data);
-                let keyValueReference = await this.getKeyValueReference(data, target);
+                keyValueReference = await this.getKeyValueReference(data, target);
                 if(isReference){
                     return keyValueReference;
                 }else{
                     let updateResult = await target.update(this.removeModelKeys(keyValueReference), data);
                     return keyValueReference;
                 }
+
+            case RelationTypes.one2n:
+                if(data.length){
+                    target = this.getTarget(data[0]);
+                    keyValueReference = await this.getKeyValueReference(data[0], target);
+                    if(!this.isUpdateLinkReference(data[0], this.definition.linkings.update, target)){
+                        for(let entry of data){
+                            let ref = this.removeModelKeys(entry);
+                            let result = await target.update(ref, entry);
+                            //let result = await 
+                        }
+                    }
+                    return keyValueReference;
+                }
+                return null;
             default:
                 throw new Error('Relation method "update" is not implemented for type "' + this.definition.type + '"'); 
         }
@@ -363,14 +389,14 @@ export class ModelRelation {
                     
                 }else{
                     let keyValueReference = await this.getKeyValueReference(this.removeModelKeys(ressource), target);
-                    return await target.remove(this.removeModelKeys(keyValueReference));
+                    return await target.remove(keyValueReference);
                 }
             default:
                 throw new Error('Relation method "remove" is not implemented for type "' + this.definition.type + '"');   
         }
     }
 
-
+/*
     public async query(storageQuery : StorageQuery){
         let query = storageQuery.getQuery();
         switch(query.action){
@@ -387,9 +413,10 @@ export class ModelRelation {
                     default:
                         throw new Error('realtion query is not implemented for type "' + this.definition.type + '"');
                 };
+            
         }
         
     }
-
+*/
 
 }

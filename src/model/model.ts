@@ -11,6 +11,8 @@ import { CommandManager } from '../command/command.manager';
 import { ModelRelation } from '../relation/relation';
 import { StorageQuery, QueryActions } from '../storage/storage.query';
 import { RelationTypes } from '../relation/relation.types';
+import { ModelHelper } from './model.helper';
+import { ENGINE_METHOD_DIGESTS } from 'constants';
 
 export interface ModelPropertyDataOptions {
     validations? : Array<any>
@@ -46,6 +48,11 @@ export class ModelPropertyData {
 export interface UpdateData {
     (key : string) : any
 }
+
+export interface ResourceData {
+    (key : string) : any
+}
+
 
 export class Model {
 
@@ -156,9 +163,8 @@ export class Model {
             properties : propertyListMessageList
         }
     }
-
+/*
     private async convertToModelPropertyData(data : any){
-        let output : Array<ModelPropertyData> = [];
         let properties = await this.properties();
         let relations = await this.getRelations();
       
@@ -168,7 +174,7 @@ export class Model {
             }
         }
         return properties;
-    }
+    }*/
 
     private async convertToResourceAccessKey(data : any) : Promise<ResourceAccessKey> {
         try {
@@ -267,7 +273,7 @@ export class Model {
         }
         return result;
     }
-
+/*
     private async readQueryRelation(relation : any, result : any, propertyName : string){
         let realtionsValues = result.map((current) => {
             return current[propertyName];
@@ -278,6 +284,10 @@ export class Model {
         );
         return this.mergeResult(result, relationResult, propertyName);
     }
+
+    private async updateQuery(query){
+        
+    }
  
     public async query(storageQuery : StorageQuery) : Promise<any> {
         try {
@@ -285,18 +295,42 @@ export class Model {
             switch(queryResult.action){
                 //read query
                 case QueryActions.read:
-                    let result = await this.__storage.query(storageQuery);
-                    if(result.length){
-                        let propertyData = await this.convertToModelPropertyData(result[0]);
+                    let readResult = await this.__storage.query(storageQuery);
+                    if(readResult.length){
+                        let propertyData = await ModelHelper.convertToModelPropertyData(readResult[0], this);
                         for(let i = 0; i < propertyData.length; i++){
                             if(propertyData[i].relation){
-                                result = await this.readQueryRelation(propertyData[i].relation, result, propertyData[i].name);
+                                readResult = await this.readQueryRelation(propertyData[i].relation, readResult, propertyData[i].name);
                             }
                         }
                     }
-                    return result;
+                    return readResult;
                 case QueryActions.update:
-                    
+                    //let updateResult = await this.__storage.query(storageQuery.copyAsReadable());
+                   await storageQuery.modify(async (current) => {
+                        //console.log("->", current)
+                        for(let entry of current.data){
+                            console.log("ENTRY", entry)
+                            let propertyData = await ModelHelper.convertToModelPropertyData(entry, this);
+                            for(let i = 0; i < propertyData.length; i++){
+                                if(propertyData[i].relation){
+                                    let updateData = await propertyData[i].relation.update(propertyData[i].value);
+                                    console.log("updat name", propertyData[i].name)
+                                    console.log("update vaue", propertyData[i].value)
+                                    console.log("updateData", updateData)
+                                    current.data[propertyData[i].name] = updateData;
+                                }
+                                
+                            }
+                        }
+                        //console.log("current", current)
+                        return current;
+                    })
+                    //console.log("QUERY", storageQuery);
+                    return await this.__storage.query(storageQuery);
+                    //get relations from query
+                   // let changedFields = storageQuery.getChangedFields();
+                   // let propertyData = await this.convertToModelPropertyData
                 default:
                     throw new Error('model query method "' + queryResult.action + '" is not implemented.')    
             }
@@ -305,14 +339,21 @@ export class Model {
             throw e;
         }
     }
-
+*/
     /**
      * creates a new model entry
      * @param data and key / value object with the data
      * @throws throws an validation error if the data is not valid
      */
-    public async create(data : any) : Promise<string | number> {
+    public async create(data : any) : Promise<string | number | Array<string | number>> {
         try {
+            if(Array.isArray(data)){
+                let output = [];
+                for(let entry of data){
+                    output.push(await this.create(entry));
+                }
+                return output;
+            }
             let validation = await this.validate(data);
             if(!validation.isValid) {
                 throw new ModelValidationError(
@@ -321,7 +362,7 @@ export class Model {
                     validation
                 )
             }
-            let propertyData = await this.convertToModelPropertyData(data);
+            let propertyData = await ModelHelper.convertToModelPropertyData(data, this);
             //create relations
             for(let i = 0; i < propertyData.length; i++){
                 if(propertyData[i].relation){
@@ -335,25 +376,38 @@ export class Model {
         }
     }
 
+    private async readRelations(result : any){
+        let propertyData = await ModelHelper.convertToModelPropertyData(result, this);
+        //read relations
+        for(let i = 0; i < propertyData.length; i++){
+            if(propertyData[i].relation){
+                result[propertyData[i].name] = await propertyData[i].relation.read(result[propertyData[i].name]);
+            }
+        }
+        return result;
+    }
+
     /**
      * reads an entry by the given resource 
      * @param resource
      */
-    public async read(resource : any) : Promise<any> {
+    public async read(resource : ResourceData | Function) : Promise<any> {
         try {
-            
-            let accessKey = await this.convertToResourceAccessKey(resource);
+            let accessKey = (typeof resource === 'function')
+                    ? await this.convertToResourceAccessKey(resource)
+                    : resource
+      
             let result = await this.__storage.read(accessKey);
             if(!result){
                 return null;
             }
-
-            let propertyData = await this.convertToModelPropertyData(result);
-            //read relations
-            for(let i = 0; i < propertyData.length; i++){
-                if(propertyData[i].relation){
-                    result[propertyData[i].name] = await propertyData[i].relation.read(result[propertyData[i].name]);
+            
+            if(Array.isArray(result)){
+                for(let i = 0; i < result.length; i++){
+                    result[i] = await this.readRelations(result[i]);
                 }
+            }else{
+                result = await this.readRelations(result);
             }
 
             return result;
@@ -393,39 +447,68 @@ export class Model {
         return target;
     }
 
+
+    private async updateSingleEntry(currentData : any, data : any){
+        currentData = this.updateData(currentData, data);
+        let validation = await this.validate(currentData);
+        if(!validation.isValid) {
+            throw new ModelValidationError(
+                'Model "' + this.constructor.name + '" is not valid!',
+                this.constructor.name,
+                validation
+            )
+        }
+        
+        let propertyData = await ModelHelper.convertToModelPropertyData(currentData, this);
+        for(let i = 0; i < propertyData.length; i++){
+            if(propertyData[i].relation){
+                propertyData[i].value = await propertyData[i].relation.update(currentData[propertyData[i].name]);
+            }
+        }
+
+        return propertyData
+    }
+
     /**
      * updates an existing entry
      * @param resource
      * @param data 
      * @throws throws an ModelValidationError if the data is not valid
      */
-    public async update(resource : any, data : any) : Promise<boolean> {
+    public async update(resource : ResourceData | Function, data : any) : Promise<boolean> {
         try {
-
-            let accessKey = await this.convertToResourceAccessKey(resource);
-            let currentData = await this.read(accessKey);
+            let currentData = await this.read(resource);
             if(!currentData){
                 return false;
             }
-            currentData = this.updateData(currentData, data);
-            let validation = await this.validate(currentData);
-            if(!validation.isValid) {
-                throw new ModelValidationError(
-                    'Model "' + this.constructor.name + '" is not valid!',
-                    this.constructor.name,
-                    validation
-                )
-            }
             
-            let propertyData = await this.convertToModelPropertyData(currentData);
-            for(let i = 0; i < propertyData.length; i++){
-                if(propertyData[i].relation){
-                    propertyData[i].value = await propertyData[i].relation.update(currentData[propertyData[i].name]);
+            let updatData;
+            if(Array.isArray(currentData)){
+                updatData =  [];
+                for(let entry of currentData){
+                    updatData.push(await this.updateSingleEntry(entry, data));
                 }
+            }else{
+                updatData = await this.updateSingleEntry(currentData, data);
             }
-            return this.__storage.update(accessKey, propertyData);
+
+            let accessKey = (typeof resource === 'function')
+                ? resource
+                : await this.convertToResourceAccessKey(resource);
+        
+            return this.__storage.update(accessKey, updatData);
         }catch(e){
             throw e;
+        }
+    }
+
+    private async removeRelations(result : any){
+        let propertyData = await ModelHelper.convertToModelPropertyData(result, this);
+        //delete relations
+        for(let i = 0; i < propertyData.length; i++){
+            if(propertyData[i].relation){
+                propertyData[i].value = await propertyData[i].relation.remove(result[propertyData[i].name]);
+            }
         }
     }
 
@@ -433,16 +516,19 @@ export class Model {
      * removes a resource
      * @param resource 
      */
-    public async remove(resource : any) : Promise<any> {
+    public async remove(resource : ResourceData | Function) : Promise<any> {
         try {
-            let accessKey = await this.convertToResourceAccessKey(resource);
+            let accessKey = (typeof resource === 'function')
+                    ? await this.convertToResourceAccessKey(resource)
+                    : resource;
+            
             let result = await this.__storage.read(accessKey);
-            let propertyData = await this.convertToModelPropertyData(result);
-            //delete relations
-            for(let i = 0; i < propertyData.length; i++){
-                if(propertyData[i].relation){
-                    propertyData[i].value = await propertyData[i].relation.remove(result[propertyData[i].name]);
+            if(Array.isArray(result)){
+                for(let entry of result){
+                    await this.removeRelations(entry);
                 }
+            }else{
+                await this.removeRelations(result);
             }
             return this.__storage.remove(accessKey);
         }catch(e){

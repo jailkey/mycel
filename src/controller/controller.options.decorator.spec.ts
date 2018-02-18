@@ -35,6 +35,8 @@ class MyDecoratedTestController extends Controller {
     public myTestComannd() {
         return 'comman-test'
     }
+
+    
 }
 
 describe('Controller Options Decorator', () => {

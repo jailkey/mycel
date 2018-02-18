@@ -110,7 +110,7 @@ describe('@Relation', () => {
         model = new MyDecoratedRelationTestModel();
     })
 
-    xdescribe('test one2one relation with subrelation and deep linking.', () => {
+    describe('test one2one relation with subrelation and deep linking.', () => {
 
         it('adds some data to the model.', async(done) => {
             let result = await model.create({
