@@ -182,7 +182,9 @@ export class Model {
             let keys = await this.getKeys();
             for(let key of keys){
                 if(!data.hasOwnProperty(key)){
+                    console.log("->", data)
                     throw new Error('Can not convert data to RessourceAccessKey, because the data has not property "' + key + '"');
+                
                 }
                 output[key] = data[key];
             }
