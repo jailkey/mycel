@@ -8,7 +8,7 @@ import { Validation } from '../model/model.validation.decorator';
 import { Require } from '../validation/validations/require';
 import { Key } from '../model/model.key.decorator';
 import { Relation, ModelRelation } from './relation';
-import { RelationTypes, LinkTypes} from './relation.types';
+import { RelationTypes, LinkTypes, RelationKeyTypes} from './relation.types';
 
 @ModelOptions({
     storage : new FileStorage({
@@ -55,6 +55,7 @@ class RelationModel extends Model {
     })
 })
 class RelationModelOneTwoN extends Model {
+    constructor(){super();}
 
     @Key
     @AutoIncrement
@@ -68,6 +69,24 @@ class RelationModelOneTwoN extends Model {
     public subRelation : ModelRelation = null;
 }
 
+
+@ModelOptions({
+    storage : new FileStorage({
+        path : './tmp',
+        name : 'my_relation_model_m_two_n_deep_test',
+        permissions : new StoragePermissions(true, true)
+    })
+})
+class RelationModelMTwoN extends Model {
+    constructor(){super();}
+
+    @Key
+    @AutoIncrement
+    public id : number = 0;
+
+    public mTwoNTest : string = '';
+
+}
 
 
 @ModelOptions({
@@ -102,6 +121,12 @@ class MyDecoratedRelationTestModel extends Model {
     })
     public oneTwoNRelation : ModelRelation = null;
 
+
+    @Relation(RelationModelMTwoN, {
+        type : RelationTypes.m2n,
+        linking : LinkTypes.deep
+    })
+    public mTwoNRelation : ModelRelation = null;
 }
 
 describe('@Relation', () => {
@@ -113,26 +138,39 @@ describe('@Relation', () => {
     describe('test one2one relation with subrelation and deep linking.', () => {
 
         it('adds some data to the model.', async(done) => {
-            let result = await model.create({
-                firstName : 'Hans',
-                lastName : 'Peter',
-                relationProperty : {
-                    'RelationModel.someKey' : 'something',
-                    'RelationModel.subRelation' : {
-                        'SubRealationMolde.subKey' : 'some other thing'
-                    }
-                },
-                oneTwoNRelation : [
-                    {
-                        oneTwoNKey : 'mykey',
-                        somethingElse : 'first entry'
+            try {
+                let result = await model.create({
+                    firstName : 'Hans',
+                    lastName : 'Peter',
+                    
+                    relationProperty : {
+                        'RelationModel.someKey' : 'something',
+                        'RelationModel.subRelation' : {
+                            'SubRealationMolde.subKey' : 'some other thing'
+                        }
                     },
-                    {
-                        oneTwoNKey : 'mykey',
-                        somethingElse : 'second entry'
-                    }
-                ]
-            });
+                    oneTwoNRelation : [
+                        {
+                            oneTwoNKey : 'mykey',
+                            somethingElse : 'first entry'
+                        },
+                        {
+                            oneTwoNKey : 'mykey',
+                            somethingElse : 'second entry'
+                        }
+                    ],
+                    mTwoNRelation : [
+                        {
+                            mTwoNTest : 'irgenwas'
+                        },
+                        {
+                            mTwoNTest : 'wasanderes'
+                        }
+                    ]
+                });
+            }catch(e){
+                console.error("e", e)
+            }
             done();
         })
 
@@ -165,7 +203,7 @@ describe('@Relation', () => {
 
         it('updates the data with relation and subrelation', async(done) => {
             let result = await model.update({ id : 0}, {
-                firstName : 'Peter',
+                firstName : 'NewName',
                 relationProperty : {
                     'RelationModel.subRelation' : {
                         'SubRealationMolde.subKey' : 'some things changed'
@@ -174,7 +212,7 @@ describe('@Relation', () => {
             })
 
             let readed = await model.read({ id : 0 });
-            expect(readed.firstName).toBe('Peter');
+            expect(readed.firstName).toBe('NewName');
             expect(readed.relationProperty.subRelation.subKey).toBe('some things changed');
             done();
         })
@@ -185,6 +223,12 @@ describe('@Relation', () => {
             expect(result).toBeTruthy();
             result = await model.read({ id : 0 });
             expect(result).toBe(null);
+
+            let relationModel = new RelationModelOneTwoN();
+            let realtionResult = await relationModel.read({ id : 0 });
+            expect(realtionResult).toBe(null);
+            realtionResult = await relationModel.read({ id : 0 });
+            expect(realtionResult).toBe(null);
             done();
         })
 

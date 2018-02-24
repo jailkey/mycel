@@ -60,8 +60,13 @@ export class FileStorage implements Storage {
                                 reject(err);
                                 return;
                             }
-                            if(data){
-                                resolve(JSON.parse(data));
+                            if(data.trim()){
+                                try {
+                                    let output = JSON.parse(data);
+                                    resolve(output);
+                                }catch(e){
+                                    resolve([]);
+                                }
                             }else{
                                 resolve([]);
                             }
@@ -109,7 +114,7 @@ export class FileStorage implements Storage {
     }
 
     private findKey(resource : ResourceAccessKey | Function, data : Array<any>){
-        return data.find((current : any) => {
+        return data.filter((current : any) => {
             let found = true;
             if(typeof resource === 'function'){
                 found = resource(current);
@@ -125,7 +130,7 @@ export class FileStorage implements Storage {
         })
     }
 
-    private async addData(data, enty){
+    private addData(data, enty){
         let savedData = {};
         for(let property of enty){
             let value = (property.autoIncrement) 
@@ -144,7 +149,6 @@ export class FileStorage implements Storage {
      */
     public async create(data : Array<ModelPropertyData> | Array<Array<ModelPropertyData>>) {
         try {
-            
             let fileData = await this.readFile();
             let output;
             if(Array.isArray(data[0])){
@@ -169,7 +173,12 @@ export class FileStorage implements Storage {
     public async read(ressource : ResourceAccessKey | Function){
         try {
             let fileData = await this.readFile();
-            return this.findKey(ressource, fileData);
+            let foundRead = this.findKey(ressource, fileData);
+            return (!foundRead.length)
+                ? null
+                : (foundRead.length === 1) 
+                        ? foundRead[0]
+                        : foundRead;
         }catch(e){
             throw e;
         }
@@ -220,23 +229,20 @@ export class FileStorage implements Storage {
     public async remove(resource : ResourceAccessKey | Function){
         try {
             let fileData = await this.readFile();
-            for(let i = 0; i < fileData.length; i++){
+            let output = fileData.filter((current) => {
                 let found = true;
                 if(typeof resource === 'function'){
-                    found = resource(fileData[i]);
+                    found = resource(current);
                 }else{
                     for(let key of Object.keys(resource)){
-                        if(fileData[i][key] !== resource[key]){
+                        if(current[key] !== resource[key]){
                             found = false;
                         }
                     }
                 }
-                
-                if(found){
-                    fileData.splice(i, 1);
-                }
-            }
-            await this.writeFile(fileData);
+                return !found;
+            });
+            await this.writeFile(output);
             return true;
         }catch(e){
             throw e;
@@ -343,13 +349,11 @@ export class FileStorage implements Storage {
                         if(Array.isArray(filter[y][x].query.data)){
                             updateData = filter[y][x].query.data.map((entry) => {
                                 let output = {};
-                                console.log("entry.name",entry.name)
                                 output[entry.name] = entry.value;
                                 return output;
                             });
                         }else{
                             let output = {};
-                            console.log("filter[y][x].query.data.name", filter[y][x].query.data.name)
                             output[filter[y][x].query.data.name] = filter[y][x].query.data.value;
                             updateData = output;
                         }

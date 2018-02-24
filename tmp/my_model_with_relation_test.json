@@ -8,6 +8,24 @@
     },
     "oneTwoNRelation": {
       "RelationModelOneTwoN.oneTwoNKey": "mykey"
-    }
+    },
+    "mTwoNRelation": [
+      {
+        "id": 0,
+        "mTwoNTest": "irgenwas"
+      },
+      {
+        "id": 1,
+        "mTwoNTest": "wasanderes"
+      },
+      {
+        "id": 2,
+        "mTwoNTest": "irgenwas"
+      },
+      {
+        "id": 3,
+        "mTwoNTest": "wasanderes"
+      }
+    ]
   }
 ]

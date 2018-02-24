@@ -27,7 +27,6 @@ describe('StorageQuery', () => {
 
     describe('and()', () => {
         it('use "and" method to add a child condition.', () => {
-            console.log("AND QUERY")
             query.and((data) => data.lastname === 'Peter');
             expect(query.getQuery().condition.child.type).toBe(QueryConditionTypes.and);
         })
@@ -62,7 +61,6 @@ describe('StorageQuery', () => {
             query.and((entry) => entry.id === '2');
             let readable = query.copyAsReadable();
             let queryCopy = readable.getQuery();
-            console.log("queryCopy", queryCopy);
             expect(queryCopy.action).toBe('read')
         });
 

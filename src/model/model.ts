@@ -50,7 +50,7 @@ export interface UpdateData {
 }
 
 export interface ResourceData {
-    (key : string) : any
+
 }
 
 
@@ -163,28 +163,15 @@ export class Model {
             properties : propertyListMessageList
         }
     }
-/*
-    private async convertToModelPropertyData(data : any){
-        let properties = await this.properties();
-        let relations = await this.getRelations();
-      
-        for(let i = 0; i < properties.length; i++){
-            if(data.hasOwnProperty(properties[i].name)){
-                properties[i].value = data[properties[i].name];
-            }
-        }
-        return properties;
-    }*/
 
     private async convertToResourceAccessKey(data : any) : Promise<ResourceAccessKey> {
         try {
             let output : ResourceAccessKey = {};
             let keys = await this.getKeys();
+            data = ModelHelper.removeModelKeys(data);
             for(let key of keys){
                 if(!data.hasOwnProperty(key)){
-                    console.log("->", data)
                     throw new Error('Can not convert data to RessourceAccessKey, because the data has not property "' + key + '"');
-                
                 }
                 output[key] = data[key];
             }
@@ -258,90 +245,13 @@ export class Model {
         }
     }
 
-    private createRealtionQuery(data : Array<any>, type : QueryActions){
-        let query = new StorageQuery();
-        switch(type){
-            case QueryActions.read:
-                return query
-                        .read()
-                        .list(data);
-        }
-    
-    }
-
     private mergeResult(result : Array<any>, data : Array<any>, property : string){
         for(let i = 0; i < result.length; i++){
             result[i][property] = data[i];
         }
         return result;
     }
-/*
-    private async readQueryRelation(relation : any, result : any, propertyName : string){
-        let realtionsValues = result.map((current) => {
-            return current[propertyName];
-        });
 
-        let relationResult = await relation.query(
-            this.createRealtionQuery(realtionsValues, QueryActions.read)
-        );
-        return this.mergeResult(result, relationResult, propertyName);
-    }
-
-    private async updateQuery(query){
-        
-    }
- 
-    public async query(storageQuery : StorageQuery) : Promise<any> {
-        try {
-            let queryResult = storageQuery.getQuery();
-            switch(queryResult.action){
-                //read query
-                case QueryActions.read:
-                    let readResult = await this.__storage.query(storageQuery);
-                    if(readResult.length){
-                        let propertyData = await ModelHelper.convertToModelPropertyData(readResult[0], this);
-                        for(let i = 0; i < propertyData.length; i++){
-                            if(propertyData[i].relation){
-                                readResult = await this.readQueryRelation(propertyData[i].relation, readResult, propertyData[i].name);
-                            }
-                        }
-                    }
-                    return readResult;
-                case QueryActions.update:
-                    //let updateResult = await this.__storage.query(storageQuery.copyAsReadable());
-                   await storageQuery.modify(async (current) => {
-                        //console.log("->", current)
-                        for(let entry of current.data){
-                            console.log("ENTRY", entry)
-                            let propertyData = await ModelHelper.convertToModelPropertyData(entry, this);
-                            for(let i = 0; i < propertyData.length; i++){
-                                if(propertyData[i].relation){
-                                    let updateData = await propertyData[i].relation.update(propertyData[i].value);
-                                    console.log("updat name", propertyData[i].name)
-                                    console.log("update vaue", propertyData[i].value)
-                                    console.log("updateData", updateData)
-                                    current.data[propertyData[i].name] = updateData;
-                                }
-                                
-                            }
-                        }
-                        //console.log("current", current)
-                        return current;
-                    })
-                    //console.log("QUERY", storageQuery);
-                    return await this.__storage.query(storageQuery);
-                    //get relations from query
-                   // let changedFields = storageQuery.getChangedFields();
-                   // let propertyData = await this.convertToModelPropertyData
-                default:
-                    throw new Error('model query method "' + queryResult.action + '" is not implemented.')    
-            }
-            
-        }catch(e){
-            throw e;
-        }
-    }
-*/
     /**
      * creates a new model entry
      * @param data and key / value object with the data
@@ -368,7 +278,9 @@ export class Model {
             //create relations
             for(let i = 0; i < propertyData.length; i++){
                 if(propertyData[i].relation){
-                    propertyData[i].value = await propertyData[i].relation.create(data[propertyData[i].name]);
+                    if(data[propertyData[i].name] !== undefined){
+                        propertyData[i].value = await propertyData[i].relation.create(data[propertyData[i].name]);
+                    }
                 }
             }
             let result = await this.__storage.create(propertyData);
@@ -382,7 +294,7 @@ export class Model {
         let propertyData = await ModelHelper.convertToModelPropertyData(result, this);
         //read relations
         for(let i = 0; i < propertyData.length; i++){
-            if(propertyData[i].relation){
+            if(propertyData[i].relation &&  result[propertyData[i].name] !== null){
                 result[propertyData[i].name] = await propertyData[i].relation.read(result[propertyData[i].name]);
             }
         }
@@ -395,10 +307,14 @@ export class Model {
      */
     public async read(resource : ResourceData | Function) : Promise<any> {
         try {
+            if(typeof resource !== 'function' && !Object.keys(resource).length){
+                return null;
+            }
+
             let accessKey = (typeof resource === 'function')
-                    ? await this.convertToResourceAccessKey(resource)
-                    : resource
-      
+                    ? resource
+                    : await this.convertToResourceAccessKey(resource)
+                    
             let result = await this.__storage.read(accessKey);
             if(!result){
                 return null;
@@ -521,23 +437,26 @@ export class Model {
     public async remove(resource : ResourceData | Function) : Promise<any> {
         try {
             let accessKey = (typeof resource === 'function')
-                    ? await this.convertToResourceAccessKey(resource)
-                    : resource;
+                    ? resource
+                    : await this.convertToResourceAccessKey(resource);
             
             let result = await this.__storage.read(accessKey);
             if(Array.isArray(result)){
                 for(let entry of result){
-                    await this.removeRelations(entry);
+                    if(entry){
+                        await this.removeRelations(entry);
+                    }
                 }
             }else{
-                await this.removeRelations(result);
+                if(result){
+                    await this.removeRelations(result);
+                }
             }
             return this.__storage.remove(accessKey);
         }catch(e){
             throw e;
         }
     }
-
 
     /**
      * a list of alle model properties with its meta data
