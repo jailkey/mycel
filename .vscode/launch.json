@@ -1,0 +1,65 @@
+{
+    // Verwendet IntelliSense zum Ermitteln möglicher Attribute.
+    // Zeigen Sie auf vorhandene Attribute, um die zugehörigen Beschreibungen anzuzeigen.
+    // Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Programm starten",
+            "program": "jasmine-ts \"src/**/*.spec.ts\"",
+            "stopOnEntry": false,
+            "cwd": ".",
+            "runtimeExecutable": null,
+            "sourceMaps": true,
+            //"preLaunchTask": "jasmine-ts \"src/**/*.spec.ts\"",
+            "outFiles": [
+                "${workspaceFolder}/build/**/*.js"
+            ]
+        },
+        {
+            "name": "Test",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "test"],
+            "protocol": "inspector",
+            "sourceMaps": true,
+            "internalConsoleOptions": "openOnSessionStart",
+            "outFiles": [
+                "${workspaceFolder}/build/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test all .specs",
+            "program": "${workspaceFolder}/node_modules/jasmine-ts/lib/index.js",
+            "args": [
+              "./src/**/*.spec.ts",
+            ],
+            "cwd": "${workspaceRoot}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "integratedTerminal",
+            "outputCapture":"console"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test Current File",
+            "program": "${workspaceFolder}/node_modules/jasmine-ts/lib/index.js",
+            "args": [
+                "${file}",
+            ],
+            "cwd": "${workspaceRoot}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "integratedTerminal",
+            "outputCapture":"console"
+        }
+
+
+        
+    ]
+}

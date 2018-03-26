@@ -164,11 +164,13 @@ export class Model {
         }
     }
 
-    private async convertToResourceAccessKey(data : any) : Promise<ResourceAccessKey> {
+    private async convertToResourceAccessKey(data : any, withModelKey : boolean = false) : Promise<ResourceAccessKey> {
         try {
             let output : ResourceAccessKey = {};
             let keys = await this.getKeys();
-            data = ModelHelper.removeModelKeys(data);
+            if(!withModelKey){
+                data = ModelHelper.removeModelKeys(data);
+            }
             for(let key of keys){
                 if(!data.hasOwnProperty(key)){
                     throw new Error('Can not convert data to RessourceAccessKey, because the data has not property "' + key + '"');
@@ -290,6 +292,14 @@ export class Model {
         }
     }
 
+    private isEmpty(value : any){
+        if(Array.isArray(value)){
+            if(!value.length){
+                return true;
+            }
+        }
+    }
+
     private async readRelations(result : any){
         let propertyData = await ModelHelper.convertToModelPropertyData(result, this);
         //read relations
@@ -345,16 +355,32 @@ export class Model {
         return output;
     }
 
+
     private updateData(target : any, newData : any){
         newData = this.removeModelKeys(newData);
         for(let prop in newData){
             if(newData.hasOwnProperty(prop)){
                 if(Array.isArray(newData[prop])){
+                    
+                    console.log("-------->", prop, newData,  target[prop])
                     throw new Error("Array is not implemented");
                     /*
+                    let output = [];
                     for(let i = 0; i < newData[prop].length; i++){
-                        
-                    }*/
+                        for(let y = 0; y < target[prop].length; y++){
+                         
+                        }
+                        //output.push(this.updateData(target[prop][i], )
+                    }
+                    target[prop] = newData[prop];*/
+                }else if(Array.isArray(target)){
+                    for(let i = 0; i < target.length; i++){
+                        if(typeof newData[prop] === 'object'){
+                            target[i][prop] = this.updateData(target[i][prop], newData[prop]);
+                        }else{
+                            target[i][prop] = newData[prop];
+                        }
+                    }
                 }else if(typeof newData[prop] === 'object'){
                     target[prop] = this.updateData(target[prop], newData[prop]);
                 }else{
@@ -395,12 +421,14 @@ export class Model {
      */
     public async update(resource : ResourceData | Function, data : any) : Promise<boolean> {
         try {
+       
             let currentData = await this.read(resource);
             if(!currentData){
                 return false;
             }
-            
+
             let updatData;
+
             if(Array.isArray(currentData)){
                 updatData =  [];
                 for(let entry of currentData){
@@ -414,6 +442,8 @@ export class Model {
                 ? resource
                 : await this.convertToResourceAccessKey(resource);
         
+
+            
             return this.__storage.update(accessKey, updatData);
         }catch(e){
             throw e;

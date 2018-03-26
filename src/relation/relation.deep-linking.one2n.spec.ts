@@ -12,8 +12,8 @@ import { RelationTypes, LinkTypes, RelationKeyTypes} from './relation.types';
 
 @ModelOptions({
     storage : new FileStorage({
-        path : './tmp',
-        name : 'my_sub_relation_model_test',
+        path : './tmp/one_2_n',
+        name : 'my_sub_relation_model_test_one_2_n',
         permissions : new StoragePermissions(true, true)
     })
 })
@@ -26,32 +26,34 @@ class SubRelationModel extends Model {
     public subKey : string = '';
 }
 
+
 @ModelOptions({
     storage : new FileStorage({
-        path : './tmp',
-        name : 'my_relation_model_test',
+        path : './tmp/one_2_n',
+        name : 'my_relation_model_one_two_n_deep_test',
         permissions : new StoragePermissions(true, true)
     })
 })
-class RelationModel extends Model {
+class RelationModelOneTwoN extends Model {
+    constructor(){super();}
 
     @Key
     @AutoIncrement
     public id : number = 0;
 
-    public someKey : string = '';
+    public oneTwoNKey : string = '';
+
+    public somethingElse : string = '';
 
     @Relation(SubRelationModel, { type : RelationTypes.one2one, linking : LinkTypes.deep })
     public subRelation : ModelRelation = null;
 }
 
 
-
-
 @ModelOptions({
     storage : new FileStorage({
-        path : './tmp',
-        name : 'my_model_with_relation_test',
+        path : './tmp/one_2_n',
+        name : 'my_model_with_relation_test_one_2_n',
         permissions : new StoragePermissions(true, true)
     })
 })
@@ -63,19 +65,17 @@ class MyDecoratedRelationTestModel extends Model {
     @AutoIncrement
     public id : number = 0;
 
-    @Validation(Require)
-    public firstName : string = null;
+    @Relation(RelationModelOneTwoN, { 
+        type : RelationTypes.one2n, 
+        linking : LinkTypes.deep,
+        relationKeys : [ 'oneTwoNKey' ]
+    })
+    public oneTwoNRelation : ModelRelation = null;
 
-    @Validation(Require)
-    public lastName : string = null;
-
-
-    @Relation(RelationModel, { type : RelationTypes.one2one, linking : LinkTypes.deep })
-    public relationProperty : ModelRelation = null;
 
 }
 
-xdescribe('@Relation', () => {
+describe('@Relation one2n', () => {
     let model : Model;
     it('creats a new model instance.', () => {
         model = new MyDecoratedRelationTestModel();
@@ -86,15 +86,23 @@ xdescribe('@Relation', () => {
         it('adds some data to the model.', async(done) => {
             try {
                 let result = await model.create({
-                    firstName : 'Hans',
-                    lastName : 'Peter',
-                    
-                    relationProperty : {
-                        'RelationModel.someKey' : 'something',
-                        'RelationModel.subRelation' : {
-                            'SubRealationMolde.subKey' : 'some other thing'
+
+                    oneTwoNRelation : [
+                        {
+                            oneTwoNKey : 'mykey',
+                            somethingElse : 'first entry',
+                            subRelation : {
+                                subKey : 'irgendwas'
+                            }
+                        },
+                        {
+                            oneTwoNKey : 'mykey',
+                            somethingElse : 'second entry',
+                            subRelation : {
+                                subKey : 'nextlevel'
+                            }
                         }
-                    }
+                    ]
                 });
             }catch(e){
                 console.error("e", e)
@@ -105,51 +113,41 @@ xdescribe('@Relation', () => {
         it('reads created data with relation.', async(done) => {
             let result = await model.read({ id : 0 });
             expect(result.id).toBe(0);
-            expect(result.firstName).toBe('Hans');
-            expect(result.lastName).toBe('Peter');
-            expect(result.relationProperty.id).toBe(0);
-            expect(result.relationProperty.someKey).toBe('something');
-            expect(result.relationProperty.subRelation.subKey).toBe('some other thing');
+            expect(Array.isArray(result.oneTwoNRelation)).toBeTruthy();
+            expect(result.oneTwoNRelation[0].oneTwoNKey).toBe('mykey');
+            expect(result.oneTwoNRelation[0].subRelation.subKey).toBe('irgendwas');
             done()
         })
 
         it('updates the data with relation', async(done) => {
             let result = await model.update({ id : 0}, {
-                firstName : 'Dieter',
-                relationProperty : {
-                    'RelationModel.someKey' : 'anything'
+                oneTwoNRelation : {
+                    somethingElse : 'onetwonrealtionsupdated',
+                    subRelation : {
+                        subKey : 'hanspeter'
+                    }
                 }
             })
             
             let readed = await model.read({ id : 0 });
-            expect(readed.firstName).toBe('Dieter');
-            expect(readed.relationProperty.someKey).toBe('anything');
+            
+            expect(readed.oneTwoNRelation[0].somethingElse).toBe('onetwonrealtionsupdated');
+            expect(readed.oneTwoNRelation[0].subRelation.subKey).toBe('hanspeter');
             done();
         })
-
-        it('updates the data with relation and subrelation', async(done) => {
-            let result = await model.update({ id : 0}, {
-                firstName : 'NewName',
-                relationProperty : {
-                    'RelationModel.subRelation' : {
-                        'SubRealationMolde.subKey' : 'some things changed'
-                    }
-                }
-            })
-
-            let readed = await model.read({ id : 0 });
-            expect(readed.firstName).toBe('NewName');
-            expect(readed.relationProperty.subRelation.subKey).toBe('some things changed');
-            done();
-        })
-
 
         it('removes the created data with and its relation.', async(done) => {
             let result = await model.remove({ id : 0 });
             expect(result).toBeTruthy();
             result = await model.read({ id : 0 });
             expect(result).toBe(null);
-            done()
+
+            let relationModel = new RelationModelOneTwoN();
+            let realtionResult = await relationModel.read({ id : 0 });
+            expect(realtionResult).toBe(null);
+            realtionResult = await relationModel.read({ id : 0 });
+            expect(realtionResult).toBe(null);
+            done();
         })
 
     });

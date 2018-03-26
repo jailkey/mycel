@@ -7,7 +7,8 @@ import { Index } from '../model/model.index.decorator';
 import { Validation } from '../model/model.validation.decorator';
 import { Require } from '../validation/validations/require';
 import { Key } from '../model/model.key.decorator';
-import { Relation, RelationTypes, ModelRelation, LinkTypes} from '../relation/relation';
+import { Relation, ModelRelation} from '../relation/relation';
+import { RelationTypes, LinkTypes } from '../relation/relation.types';
 
 @ModelOptions({
     storage : new FileStorage({
@@ -76,7 +77,7 @@ class MyDecoratedRelationTestModel extends Model {
 
 }
 
-describe('@Relation', () => {
+xdescribe('@Relation', () => {
     let model : Model;
     it('creats a new model instance.', () => {
         model = new MyDecoratedRelationTestModel();
