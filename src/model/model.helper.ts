@@ -39,4 +39,13 @@ export class ModelHelper {
         }
         return output;
     }
+
+    public static getModelKey(data : any){
+        for(let prop in data){
+            if(~prop.indexOf('.')){
+                return prop.split('.')[0];
+            }
+        }
+        return null;
+    }
 }

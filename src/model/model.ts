@@ -300,12 +300,12 @@ export class Model {
         }
     }
 
-    private async readRelations(result : any){
+    private async readRelations(result : any, withModelKeys : boolean = false){
         let propertyData = await ModelHelper.convertToModelPropertyData(result, this);
         //read relations
         for(let i = 0; i < propertyData.length; i++){
             if(propertyData[i].relation &&  result[propertyData[i].name] !== null){
-                result[propertyData[i].name] = await propertyData[i].relation.read(result[propertyData[i].name]);
+                result[propertyData[i].name] = await propertyData[i].relation.read(result[propertyData[i].name], withModelKeys);
             }
         }
         return result;
@@ -315,7 +315,7 @@ export class Model {
      * reads an entry by the given resource 
      * @param resource
      */
-    public async read(resource : ResourceData | Function) : Promise<any> {
+    public async read(resource : ResourceData | Function, withModelKeys : boolean = false) : Promise<any> {
         try {
             if(typeof resource !== 'function' && !Object.keys(resource).length){
                 return null;
@@ -332,10 +332,10 @@ export class Model {
             
             if(Array.isArray(result)){
                 for(let i = 0; i < result.length; i++){
-                    result[i] = await this.readRelations(result[i]);
+                    result[i] = await this.readRelations(result[i], withModelKeys);
                 }
             }else{
-                result = await this.readRelations(result);
+                result = await this.readRelations(result, withModelKeys);
             }
 
             return result;
@@ -355,24 +355,49 @@ export class Model {
         return output;
     }
 
+    private getModelKey(data : any){
+        for(let prop in data){
+            if(~prop.indexOf('.')){
+                return prop.split('.')[0];
+            }
+        }
+        return null;
+    }
+
+    private getModelKeys(data : any){
+        if(Array.isArray(data)){
+            return data.map((current) => {
+                return this.getModelKey(current);
+            })
+        }else{
+            return this.getModelKey(data);
+        }
+    }
+
+    private getPropertyName(prop : string, relation : string){
+        return (relation) ? relation + '.' + prop : prop;
+    }
 
     private updateData(target : any, newData : any){
-        newData = this.removeModelKeys(newData);
+        let modelKey = this.getModelKey(newData);
+        //newData = this.removeModelKeys(newData);
         for(let prop in newData){
             if(newData.hasOwnProperty(prop)){
                 if(Array.isArray(newData[prop])){
-                    
+                    /*
                     console.log("-------->", prop, newData,  target[prop])
                     throw new Error("Array is not implemented");
-                    /*
+                    */
                     let output = [];
                     for(let i = 0; i < newData[prop].length; i++){
+                        target[prop][i] = this.updateData(target[prop][i], newData[prop][i]);
+                        /*
                         for(let y = 0; y < target[prop].length; y++){
                          
-                        }
+                        }*/
                         //output.push(this.updateData(target[prop][i], )
                     }
-                    target[prop] = newData[prop];*/
+                    //target[prop] = newData[prop];
                 }else if(Array.isArray(target)){
                     for(let i = 0; i < target.length; i++){
                         if(typeof newData[prop] === 'object'){
@@ -391,10 +416,21 @@ export class Model {
         return target;
     }
 
+    private async updateSingleRelation(currentData : any){
+        let propertyData = await ModelHelper.convertToModelPropertyData(currentData, this);
+        for(let i = 0; i < propertyData.length; i++){
+            if(propertyData[i].relation){
+                propertyData[i].value = await propertyData[i].relation.update(currentData[propertyData[i].name]);
+            }
+        }
+
+        return propertyData;
+    }
 
     private async updateSingleEntry(currentData : any, data : any){
         currentData = this.updateData(currentData, data);
         let validation = await this.validate(currentData);
+        
         if(!validation.isValid) {
             throw new ModelValidationError(
                 'Model "' + this.constructor.name + '" is not valid!',
@@ -402,13 +438,23 @@ export class Model {
                 validation
             )
         }
-        
+
+        let propertyData;
+        if(Array.isArray(currentData)){
+            propertyData = [];
+            for(let entry of currentData){
+                propertyData.push(await this.updateSingleRelation(entry));
+            }
+        }else{
+            propertyData = await this.updateSingleRelation(currentData);
+        }
+        /*
         let propertyData = await ModelHelper.convertToModelPropertyData(currentData, this);
         for(let i = 0; i < propertyData.length; i++){
             if(propertyData[i].relation){
                 propertyData[i].value = await propertyData[i].relation.update(currentData[propertyData[i].name]);
             }
-        }
+        }*/
 
         return propertyData
     }
@@ -422,7 +468,7 @@ export class Model {
     public async update(resource : ResourceData | Function, data : any) : Promise<boolean> {
         try {
        
-            let currentData = await this.read(resource);
+            let currentData = await this.read(resource, true);
             if(!currentData){
                 return false;
             }

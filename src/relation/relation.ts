@@ -278,16 +278,31 @@ export class ModelRelation {
         }
     }
 
+    private addModelKey(data : any, key : string){
+        let output = {};
+        for(let prop in data){
+            if(data.hasOwnProperty(prop)){
+                output[(!~prop.indexOf('.')) ? key + '.' + prop : prop] = data[prop];
+            }
+        }
+        return output;
+    }
+
+
+
     /**
      * reads a relation resource
      * @param resource 
      */
-    public async read(resource : any, withRelations : boolean = false){
+    public async read(resource : any, withModelKeys : boolean = false){
         try {
             let target, query;
             switch(this.definition.type){
                 case RelationTypes.one2one:
                     target = this.getTarget(resource);
+                    if(withModelKeys){
+                        return await target.read(resource, true);
+                    }
                     return await target.read(this.removeModelKeys(resource));
 
                 case RelationTypes.one2n:
@@ -301,6 +316,10 @@ export class ModelRelation {
                         target = this.getTarget(entry);
                         let condition = this.getResourceCondition(entry);
                         let result = await target.read(condition, true);
+                        let modelKey = ModelHelper.getModelKey(entry);
+                        if(withModelKeys){
+                            result = this.addModelKey(result, modelKey);
+                        }
                         output.push(result);
                     }
                     return output;
@@ -418,14 +437,25 @@ export class ModelRelation {
                         return await target.remove(keyValueReference);
                     }
                     return true;
+
                 case RelationTypes.one2n:
-                  
                     target = this.getTarget(resource);
                     isReference = this.isRemoveLinkReference(resource, this.definition.linkings.remove, target)
                     if(!isReference){
                         return await target.remove(this.getResourceCondition(resource));
                     }
                     return true;
+
+                case RelationTypes.m2n:
+                    for(let singleResource of resource){
+                        target = this.getTarget(singleResource);
+                        isReference = this.isRemoveLinkReference(singleResource, this.definition.linkings.remove, target)
+                        if(!isReference){
+                            await target.remove(this.getResourceCondition(singleResource));
+                        }
+                    }
+                    return true;
+
                 default:
                     throw new Error('Relation method "remove" is not implemented for type "' + this.definition.type + '"');   
             }

@@ -13,7 +13,7 @@ import { RelationTypes, LinkTypes, RelationKeyTypes} from './relation.types';
 
 @ModelOptions({
     storage : new FileStorage({
-        path : './tmp',
+        path : './tmp/n2m',
         name : 'my_relation_model_m_two_n_deep_one_test',
         permissions : new StoragePermissions(true, true)
     })
@@ -31,7 +31,7 @@ class RelationModelMTwoNOne extends Model {
 
 @ModelOptions({
     storage : new FileStorage({
-        path : './tmp',
+        path : './tmp/n2m',
         name : 'my_relation_model_m_two_n_deep_two_test',
         permissions : new StoragePermissions(true, true)
     })
@@ -50,12 +50,16 @@ class RelationModelMTwoNTwo extends Model {
 
 @ModelOptions({
     storage : new FileStorage({
-        path : './tmp',
+        path : './tmp/n2m',
         name : 'my_m2n_model_with_relation_test',
         permissions : new StoragePermissions(true, true)
     })
 })
 class MyN2MTestModel extends Model{
+
+    @Key
+    @AutoIncrement
+    public id : number = 0;
 
     @Relation([RelationModelMTwoNOne, RelationModelMTwoNTwo], {
         type : RelationTypes.m2n,
@@ -64,7 +68,7 @@ class MyN2MTestModel extends Model{
     public mTwoNRelation : ModelRelation = null;
 }
 
-xdescribe('@Relations - Test n2m relations with deep linking', () => {
+describe('@Relations - Test n2m relations with deep linking', () => {
     let model : Model;
     it('creats a new model instance.', () => {
         model = new MyN2MTestModel();
@@ -84,8 +88,57 @@ xdescribe('@Relations - Test n2m relations with deep linking', () => {
             
             })
         }catch(e){
-
+            console.log("E",e )
         }
         done();
+    })
+
+    it('test if the model entries are saved', async (done) => {
+        let result = await model.read({ id : 0 });
+        expect(result.mTwoNRelation[0].mTwoNTest).toBe('irgendwas')
+        expect(result.mTwoNRelation[1].anders).toBe('wasanderes')
+        done();
+    })
+
+    it('updates the model entries', async (done) => {
+        let result = await model.update({ id : 0 }, {
+            mTwoNRelation : [
+                {
+                    'RelationModelMTwoNOne.mTwoNTest' : 'somethingchanged'
+                },
+                {
+                    'RelationModelMTwoNTwo.anders' : 'someotherthingchanged'
+                }
+            ]
+        })
+        done();
+    })
+
+    it('reads the updated data and checks it', async (done) => {
+        let result = await model.read({ id : 0 });
+        expect(result.mTwoNRelation[0].mTwoNTest).toBe('somethingchanged');
+        expect(result.mTwoNRelation[1].anders).toBe('someotherthingchanged');
+        done();
+    });
+
+    it('remove the entries', async (done) => {
+        let result = await model.remove({ id : 0 });
+        expect(result).toBeTruthy();
+        done()
+    })
+
+    it('checks if all entries are removed', async (done) => {
+        let result = await model.read({ id : 0 });
+        expect(result).toBe(null);
+
+        let subModelOne = new RelationModelMTwoNOne();
+        let subResultOne = await subModelOne.read({ id : 0 });
+        expect(subResultOne).toBe(null);
+
+        let subModelTwo = new RelationModelMTwoNTwo();
+        let subResultTwo = await subModelTwo.read({ id : 0 });
+        expect(subResultTwo).toBe(null);
+
+        done()
     })
 })
