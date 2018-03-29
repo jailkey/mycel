@@ -6,6 +6,7 @@ import { CommandHelper, CommandChain, CommandType } from '../command/command.hel
 import { CommandManager } from '../command/command.manager';
 import { CommandData } from '../command/command.data';
 import { MetaManager } from '../meta/meta.manager';
+import { ServiceConnector } from './service.connector';
 
 export class Service {
 
@@ -27,6 +28,10 @@ export class Service {
     public commands : CommandManager = new CommandManager();
 
     public namespace : string;
+
+    public connector : ServiceConnector;
+
+    
 
     /**
      * finds a command by a commandchain
@@ -81,15 +86,19 @@ export class Service {
     }
 
     //start service
-    public static start(){
-        if(this['onStart']){
-            this['onStart']();
+    public async start(){
+        if(this.connector){
+            await this.connector.connect();
+            return true;
+        }else{
+            throw new Error('No connector given!')
         }
+       
     }
 
-    public static stop(){
-        if(this['onStop']){
-            this['onStop']();
+    public async stop(){
+        if(this.connector){
+            await this.connector.disconnect();
         }
     }
 }

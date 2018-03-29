@@ -1,3 +1,4 @@
+/*
 import { Controller, ControllerOptions, GetById, DeleteById, Overwrite} from '../controller/controller';
 import { Command } from '../controller/command';
 import { MyModel } from './my.model';
@@ -40,13 +41,14 @@ export class MyController extends Controller {
     public async anotherPresentation() {
         
     }
-/*
+
     @Listen(Listener)
     public async test(result : any){
         return 
-    }*/
+    }
 
 }
+*/
 //call
 //Service:Controller:command, data { }
 

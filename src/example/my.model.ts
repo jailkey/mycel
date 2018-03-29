@@ -1,3 +1,4 @@
+/*
 import { Model, ModelOptions } from '../model/model';
 import { Presentation, InputField } from '../model/presentation'
 import { Validation, Required, TextLen, EMail } from '../model/validations';
@@ -33,4 +34,4 @@ export class MyModel extends Model{
 
     
 
-}
+}*/

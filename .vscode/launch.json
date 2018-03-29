@@ -57,6 +57,19 @@
             "internalConsoleOptions": "openOnSessionStart",
             "console": "integratedTerminal",
             "outputCapture":"console"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Execute Current File",
+           // "program": "node",
+            "args": [
+                "${file}",
+            ],
+            "cwd": "${workspaceRoot}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "integratedTerminal",
+            "outputCapture":"console"
         }
 
 

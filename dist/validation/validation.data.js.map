@@ -1,0 +1,1 @@
+{"version":3,"file":"validation.data.js","sourceRoot":"","sources":["../../src/validation/validation.data.ts"],"names":[],"mappings":";;AAAA,iDAA4D;AAG5D;IACI,YAAY,MAAY,EAAE,QAAiB,EAAE,KAAW;QAKxD,SAAI,GAAmB,yBAAa,CAAC,IAAI,CAAC;QAJtC,IAAI,CAAC,KAAK,GAAG,KAAK,CAAC;QACnB,IAAI,CAAC,MAAM,GAAG,MAAM,CAAC;QACrB,IAAI,CAAC,QAAQ,GAAG,QAAQ,CAAC;IAC7B,CAAC;CAKJ;AAVD,wCAUC"}

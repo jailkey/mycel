@@ -1,3 +1,4 @@
+/*
 import { Storage } from './storage';
 
 export interface MongoStoreConfig {
@@ -37,4 +38,4 @@ export class MongoStorage implements Storage {
 
 export class MongoQuery {
     
-}
+}*/
