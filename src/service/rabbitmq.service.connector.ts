@@ -14,14 +14,11 @@ export class RabbitMqServiceConnector implements ServiceConnector {
 
     private connection : Connection;
 
+    private queue : string;
+
     public async connect() {
-        try {
-            console.log("CONNECT")
-            
+        try {            
             this.connection = await amqplib.connect(this.options);
-            //result.then(() => { console.log('success') }, () => { console.log('error') })
-            
-            console.log("CONNECTTION RESULT", this.connection)
             return true;
         } catch(e){
             throw e;
@@ -29,29 +26,39 @@ export class RabbitMqServiceConnector implements ServiceConnector {
     }
 
     public async disconnect() {
-
         return true;
     }
 
-    public async publish(request : ServiceRequest) : Promise<ServiceResponse>{
-        this.checkConnection();
-        try {
-            let queue = 'tasks';
-            let channel = await this.connection.createChannel();
-            let queueReady = await channel.assertQueue(queue)
-            let result = await channel.sendToQueue(queue, new Buffer('something to do'));
-
-            console.log("result", result);
-            /*
-            let 
-                return ch.assertQueue(q).then(function(ok) {
-                return ch.sendToQueue(q, new Buffer('something to do'));
-                });
-            }).catch(console.warn);*/
-            return new ServiceResponse(true);
-        }catch(e){
-            throw e;
+    private getServiceFromCommand(command : string){
+        if(~command.indexOf(':')){
+            return command.split(':')[0];
         }
+        return command.split('.')[0];
+    }
+
+    public async publish(request : ServiceRequest) : Promise<any>{
+        return new Promise(async (resolve, reject) => {
+            this.checkConnection();
+            try {
+                let queue = this.getServiceFromCommand(request.command);
+                let channel = await this.connection.createChannel();
+                let queueReady = await channel.assertQueue(queue)
+                let result = await channel.sendToQueue(queue, new Buffer(JSON.stringify(request)));
+                let responseQueue = queue + '.response';
+                let queueOk = await channel.assertQueue(responseQueue);
+                let consumResult = await channel.consume(responseQueue, (msg) => {
+                    if(msg){
+                        let response = JSON.parse(msg.content.toString());
+                        if(response.uuid === request.uuid){
+                            resolve(response.data.data)
+                            channel.ack(msg);
+                        }   
+                    }
+                });
+            }catch(e){
+                reject(e);
+            }
+        })
     }
 
     private handler : Array<Function> = [];
@@ -62,9 +69,28 @@ export class RabbitMqServiceConnector implements ServiceConnector {
         }
     }
 
-    public async subscribe(callback : QuestionHandler){
+    public async subscribe(callback : Function){
         this.checkConnection();
         let channel = await this.connection.createChannel();
-        //this.handler.push()
+        let queueOk = await channel.assertQueue(this.queue);
+        let consumResult = await channel.consume(this.queue, async (msg) => {
+            if(msg){
+                let incomingData = JSON.parse(msg.content.toString());
+                let result = await callback(incomingData);
+                channel.ack(msg);
+
+                let responseQueue = this.queue + '.response';
+                let answer = {
+                    uuid : incomingData.uuid,
+                    data : result
+                }
+                let queueReady = await channel.assertQueue(responseQueue);
+                let sendResult = await channel.sendToQueue(responseQueue, new Buffer(JSON.stringify(answer)));
+            }
+        });
+    }
+
+    public setQueue(queue : string){
+        this.queue = queue;
     }
 }

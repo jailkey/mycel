@@ -39,8 +39,8 @@ TestService = __decorate([
     micro_service_decorator_1.MicroService({
         connector: new rabbitmq_service_connector_1.RabbitMqServiceConnector({
             protocol: 'amqp',
-            hostname: '172.17.0.1',
-            //        port : 8080,
+            hostname: 'localhost',
+            port: 5672,
             username: 'guest',
             password: 'guest',
             vhost: '/'

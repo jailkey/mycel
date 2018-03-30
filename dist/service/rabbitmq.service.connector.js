@@ -38,10 +38,10 @@ class RabbitMqServiceConnector {
         return __awaiter(this, void 0, void 0, function* () {
             this.checkConnection();
             try {
-                let queue = 'tasks';
+                let queue = request.command;
                 let channel = yield this.connection.createChannel();
                 let queueReady = yield channel.assertQueue(queue);
-                let result = yield channel.sendToQueue(queue, new Buffer('something to do'));
+                let result = yield channel.sendToQueue(queue, new Buffer(JSON.stringify(request.data)));
                 console.log("result", result);
                 /*
                 let

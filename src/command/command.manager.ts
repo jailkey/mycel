@@ -1,7 +1,10 @@
 import { CommandData } from './command.data';
+import { Service } from '../service/service';
 
 export class CommandManager {
+
     private commands : Array<CommandData> = [];
+    private service : Service;
 
     /**
      * registers a new command

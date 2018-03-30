@@ -32,7 +32,6 @@ export class Service {
     public connector : ServiceConnector;
 
     
-
     /**
      * finds a command by a commandchain
      * @param commandChain 
@@ -89,6 +88,12 @@ export class Service {
     public async start(){
         if(this.connector){
             await this.connector.connect();
+            this.connector.subscribe(async (data : ServiceRequest) => {
+                if(data.command){
+                    return await this.applyRequest(data);
+                }
+                return null;
+            })
             return true;
         }else{
             throw new Error('No connector given!')
@@ -100,5 +105,9 @@ export class Service {
         if(this.connector){
             await this.connector.disconnect();
         }
+    }
+
+    public async request(request : ServiceRequest){
+        return await this.connector.publish(request);
     }
 }

@@ -19,8 +19,9 @@ export interface QuestionHandler {
 }
 
 export interface ServiceConnector {
+    setQueue(queue : string)
     publish(message : ServiceRequest) : Promise<ServiceResponse>
-    subscribe(callback : QuestionHandler)
+    subscribe(callback : Function)
     connect() : Promise<boolean>
     disconnect() : Promise<boolean>
 }

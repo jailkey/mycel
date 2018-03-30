@@ -1,5 +1,6 @@
 import { Controller } from '../controller/controller';
 import { ServiceConnector } from './service.connector';
+import { Service } from './service';
 
 export interface MicroServiceOptions {
     controller? : Array<typeof Controller>
@@ -13,7 +14,7 @@ export function MicroService(options : MicroServiceOptions){
 
         function construct(constructor, args) {
   
-            let newInstance : any = new constructor(...args);
+            let newInstance : Service = new constructor(...args);
             
             //add controllers to the service if available
             if(options.controller && options.controller.length){
@@ -25,6 +26,7 @@ export function MicroService(options : MicroServiceOptions){
             //if there is a connector put it to the service 
             if(options.connector){
                 newInstance.connector = options.connector;
+                newInstance.connector.setQueue(newInstance.namespace)
             }
             
             return newInstance;
