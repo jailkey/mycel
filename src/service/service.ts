@@ -7,6 +7,8 @@ import { CommandManager } from '../command/command.manager';
 import { CommandData } from '../command/command.data';
 import { MetaManager } from '../meta/meta.manager';
 import { ServiceConnector } from './service.connector';
+import { EventEmitter } from 'events';
+import { createCipher } from 'crypto';
 
 export class Service {
 
@@ -84,17 +86,21 @@ export class Service {
         }
     }
 
+    private async connect() {
+        await this.connector.connect();
+        this.connector.subscribe(async (data : ServiceRequest) => {
+            if(data.command){
+                return await this.applyRequest(data);
+            }
+            return null;
+        });
+        return true;
+    }
+
     //start service
     public async start(){
         if(this.connector){
-            await this.connector.connect();
-            this.connector.subscribe(async (data : ServiceRequest) => {
-                if(data.command){
-                    return await this.applyRequest(data);
-                }
-                return null;
-            })
-            return true;
+            await this.connect();
         }else{
             throw new Error('No connector given!')
         }
@@ -108,6 +114,13 @@ export class Service {
     }
 
     public async request(request : ServiceRequest){
-        return await this.connector.publish(request);
+        try {
+            if(!this.connector.isConnected) {
+                await this.connect();
+            }
+            return await this.connector.publish(request);
+        }catch(e){
+            throw e;
+        }
     }
 }
