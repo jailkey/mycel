@@ -1,4 +1,6 @@
-import { Model } from '../model/model';
+/*
+
+import { Model } from '../model/model.protoytpe';
 
 export class ModelManager {
     constructor(parent) {
@@ -32,3 +34,4 @@ export class ModelManager {
         return this.models[name] || null;
     }
 }
+*/

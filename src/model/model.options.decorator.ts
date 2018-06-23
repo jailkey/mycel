@@ -1,5 +1,6 @@
+/*
 import { Storage } from '../storage/storage';
-import { Model } from './model';
+import { Model } from './model.protoytpe';
 import { CommandData } from '../command/command.data';
 
 export interface ModelData {
@@ -52,4 +53,4 @@ export function ModelOptions(options : ModelData){
         wrapped.__name = target.name;
         return wrapped;
     }
-}
+}*/

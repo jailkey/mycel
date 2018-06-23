@@ -1,7 +1,7 @@
-import { Model, ModelPropertyData } from './model';
+import { ModelPrototype, ModelPropertyData } from './model.protoytpe';
 export class ModelHelper {
 
-    public static async convertToModelPropertyData(data : any, model : Model){
+    public static async convertToModelPropertyData(data : any, model : ModelPrototype){
         let properties = await model.properties();
         let relations = await model.getRelations();
       

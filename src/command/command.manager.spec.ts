@@ -1,11 +1,11 @@
-import { CommandManager } from './command.manager';
+import { CommandManager, CommandDescription } from './command.manager';
 import { CommandData } from './command.data';
 
 describe('CommandManager', () => {
     let commandManager = new CommandManager();
 
-    let TestCommand = new CommandData('myCommand', () => { }, ['hans']);
-    let UnRegisterdCommand = new CommandData('myUnregisterdCommand', () => {},  ['hans']);
+    let TestCommand = { name : 'myCommand', parameter : ['hans'] };
+    let UnRegisterdCommand = { name : 'myUnregisterdCommand', parameter:  ['hans'] };
 
     describe('register()', () => {
         it('registers a test command', () => {

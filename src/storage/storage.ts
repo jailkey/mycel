@@ -1,4 +1,4 @@
-import { ModelPropertyData, Model } from '../model/model';
+import { ModelPropertyData } from '../model/model.protoytpe';
 import { StorageQuery } from './storage.query';
 
 export interface ResourceAccessKey {

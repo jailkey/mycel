@@ -1,4 +1,6 @@
-import { Model } from './model';
+/*
+
+import { Model } from './model.protoytpe';
 
 class TestModel extends Model {
     public myFirstProperty : string = 'test'
@@ -21,4 +23,4 @@ describe('Model', () => {
             done();
         })
     })
-})
+})*/

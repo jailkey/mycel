@@ -1,4 +1,5 @@
-import { Model } from '../model/model';
+/*
+import { ModelPrototype } from '../model/model.protoytpe';
 import { ModelOptions, ModelData } from '../model/model.options.decorator';
 import { FileStorage } from '../storage/file.storage';
 import { StoragePermissions } from '../storage/storage.permissions';
@@ -17,7 +18,7 @@ import { RelationTypes, LinkTypes } from '../relation/relation.types';
         permissions : new StoragePermissions(true, true)
     })
 })
-class SubRelationAutoModel extends Model {
+class SubRelationAutoModel extends ModelPrototype {
 
     @Key
     @AutoIncrement
@@ -34,7 +35,7 @@ class SubRelationAutoModel extends Model {
         permissions : new StoragePermissions(true, true)
     })
 })
-class RelationAutoModel extends Model {
+class RelationAutoModel extends ModelPrototype {
 
     @Key
     @AutoIncrement
@@ -55,7 +56,7 @@ class RelationAutoModel extends Model {
         permissions : new StoragePermissions(true, true)
     })
 })
-class MyDecoratedRelationTestModel extends Model {
+class MyDecoratedRelationTestModel extends ModelPrototype {
 
     constructor(){
         super();
@@ -78,7 +79,7 @@ class MyDecoratedRelationTestModel extends Model {
 }
 
 xdescribe('@Relation', () => {
-    let model : Model;
+    let model : ModelPrototype;
     it('creats a new model instance.', () => {
         model = new MyDecoratedRelationTestModel();
     })
@@ -152,4 +153,4 @@ xdescribe('@Relation', () => {
     });
 
     
-})
+})*/

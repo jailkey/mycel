@@ -1,3 +1,4 @@
+/*
 import { Controller } from './controller';
 import { Model } from '../model/model';
 
@@ -46,3 +47,4 @@ export function ControllerOptions(options : ControllerData){
         return wrapped;
     }
 }
+*/

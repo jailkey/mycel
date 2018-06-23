@@ -1,7 +1,7 @@
 import { Storage, ResourceAccessKey } from './storage';
 import { exists, open, readFile, writeFile } from 'fs';
 import { StoragePermissions } from './storage.permissions';
-import { ModelPropertyData, Model } from '../model/model';
+import { ModelPropertyData } from '../model/model.protoytpe';
 import { QueryActions, QueryConditionTypes, QueryDescription, QueryCondition, StorageQuery } from './storage.query';
 
 

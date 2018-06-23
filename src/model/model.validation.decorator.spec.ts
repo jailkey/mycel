@@ -1,9 +1,11 @@
-import { Model } from './model';
+/*
+
+import { ModelPrototype } from './model.protoytpe';
 import { Validation } from './model.validation.decorator';
 import { Require } from '../validation/validations/require';
 import { MinLength } from '../validation/validations/minlength';
  
-class MyTestModel extends Model {
+class MyTestModel extends ModelPrototype {
     constructor() {
         super();
     }
@@ -52,3 +54,4 @@ describe('@Validation', () => {
 
 
 })
+*/

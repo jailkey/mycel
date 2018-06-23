@@ -1,4 +1,5 @@
-import { Model } from '../model/model';
+/*
+import { Model } from '../model/model.protoytpe';
 import { ModelManager } from './controller.model.manager';
 import { ControllerManager } from './controller.manager';
 import { CommandManager } from '../command/command.manager';
@@ -10,6 +11,7 @@ import { CommandData } from '../command/command.data';
 export function ControllerOptions(config : any){
     return config;
 }
+
 
 //controller superclass
 export class Controller {
@@ -33,6 +35,7 @@ export class Controller {
      * finds a controller command by a command chain
      * @param commandChain 
      */
+    /*
     public findCommand(commandChain : CommandChain) : CommandData | null{
         
         if(commandChain.type === CommandType.namespace){
@@ -59,4 +62,4 @@ export class Controller {
         }
         
     }
-}
+}*/

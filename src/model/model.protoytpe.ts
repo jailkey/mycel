@@ -54,7 +54,7 @@ export interface ResourceData {
 }
 
 
-export class Model {
+export class ModelPrototype {
 
     constructor() {
         MetaManager.execute(this);
@@ -558,3 +558,4 @@ export function ModelOptions(options : any){
 export function ModelFactory(model : any){
     return new model;
 }
+

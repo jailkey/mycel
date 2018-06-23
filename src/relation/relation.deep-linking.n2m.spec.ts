@@ -1,4 +1,5 @@
-import { Model } from '../model/model';
+/*
+import { Model } from '../model/model.protoytpe';
 import { ModelOptions, ModelData } from '../model/model.options.decorator';
 import { FileStorage } from '../storage/file.storage';
 import { StoragePermissions } from '../storage/storage.permissions';
@@ -141,4 +142,4 @@ describe('@Relations - Test n2m relations with deep linking', () => {
 
         done()
     })
-})
+})*/

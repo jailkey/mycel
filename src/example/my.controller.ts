@@ -32,6 +32,7 @@ export class MyController extends Controller {
         //return this.models(MyModel).presentations();
     }
 
+    
     @Command()
     public async getUsersByName(name  : string){
        // return this.models(MyModel).query()

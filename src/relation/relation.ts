@@ -1,4 +1,4 @@
-import { Model } from '../model/model';
+import { ModelPrototype } from '../model/model.protoytpe';
 import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';
 import { MetaData, MetaDataTypes } from '../meta/meta.data';
 import { RelationKeyTypes, RelationTypes, LinkTypes } from './relation.types';
@@ -21,7 +21,7 @@ export interface RelationDefinition{
 }
 
 
-export function Relation(target : typeof Model | Array<typeof Model>, definition : RelationDefinition) : any{
+export function Relation(target : typeof ModelPrototype | Array<typeof ModelPrototype>, definition : RelationDefinition) : any{
     return function (source, property) {
         let relation = new ModelRelation(source, target, definition);
 
@@ -38,7 +38,7 @@ export function Relation(target : typeof Model | Array<typeof Model>, definition
 
 
 export class ModelRelation {
-    constructor(model : typeof Model, target : typeof Model | Array<typeof Model>, definition : RelationDefinition){ 
+    constructor(model : typeof ModelPrototype, target : typeof ModelPrototype | Array<typeof ModelPrototype>, definition : RelationDefinition){ 
         this.model = model;
 
         if(Array.isArray(target)){
@@ -57,8 +57,8 @@ export class ModelRelation {
     }
 
 
-    public model : typeof Model;
-    public targets : Array<Model> = [];
+    public model : typeof ModelPrototype;
+    public targets : Array<ModelPrototype> = [];
     public type : RelationTypes;
     public relation : any;
     private definition : RelationDefinition;
@@ -101,7 +101,7 @@ export class ModelRelation {
      * @param data
      * @param target 
      */
-    private async keysInData(data : any, target : Model) : Promise<boolean>{
+    private async keysInData(data : any, target : ModelPrototype) : Promise<boolean>{
         let keys = await target.getKeys();
         if(keys.find((key) => data[key])){
             return true;
@@ -134,7 +134,7 @@ export class ModelRelation {
      * @param data 
      * @param target 
      */
-    private async getKeyValueReference(data : any, target : Model) : Promise<any>{
+    private async getKeyValueReference(data : any, target : ModelPrototype) : Promise<any>{
         let keys;
         if(this.definition.relationKeys){
             keys = this.definition.relationKeys; 
@@ -153,7 +153,7 @@ export class ModelRelation {
      * returns the target from the key name
      * @param data 
      */
-    private getTarget(data : any) : Model{
+    private getTarget(data : any) : ModelPrototype{
         if(this.targets.length === 1){
             return this.targets[0];
         }
@@ -178,7 +178,7 @@ export class ModelRelation {
      * @param linking 
      * @param target 
      */
-    private async isCreatLinkReference(data : any, linking : LinkTypes, target : Model){
+    private async isCreatLinkReference(data : any, linking : LinkTypes, target : ModelPrototype){
         switch(linking){
             case LinkTypes.auto:
                 return await this.keysInData(data,target);
@@ -337,7 +337,7 @@ export class ModelRelation {
      * @param linking 
      * @param target 
      */
-    private isUpdateLinkReference(data : any, linking : LinkTypes, target : Model){
+    private isUpdateLinkReference(data : any, linking : LinkTypes, target : ModelPrototype){
         switch(linking){
             case LinkTypes.auto:
 
@@ -410,7 +410,7 @@ export class ModelRelation {
      * @param linking 
      * @param target 
      */
-    private isRemoveLinkReference(resource : any, linking : LinkTypes, target : Model){
+    private isRemoveLinkReference(resource : any, linking : LinkTypes, target : ModelPrototype){
         switch(linking){
             case LinkTypes.deep:
                 return false;

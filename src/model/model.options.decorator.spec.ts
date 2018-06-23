@@ -1,4 +1,5 @@
-import { Model } from './model';
+/*
+import { Model } from './model.protoytpe';
 import { ModelOptions, ModelData } from './model.options.decorator';
 import { FileStorage } from '../storage/file.storage';
 import { StoragePermissions } from '../storage/storage.permissions';
@@ -130,3 +131,4 @@ describe('@ModelOptions', () => {
 
       
 })
+*/

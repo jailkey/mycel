@@ -1,58 +1,47 @@
-import { Service } from './service';
-import { Controller } from '../controller/controller';
-import { CommandData } from '../command/command.data';
-import { ServiceRequest } from './service.request';
+import { Service, NAMESPACE_PROPERTY_NAME, CHILDREN_PROPERTY_NAME } from './service';
 
-class TestController extends Controller {
-    public namespace = "MyTestController";
-
-    public myFirstCommand(hans : string) {
-        return hans + ' said something';
-    }
+@Service({
+    namespace : 'PetersChild'
+})
+class PetersChild {
+    public whoAmI: string = 'PetersChild'
 }
 
+@Service({
+    namespace : 'HansPeter',
+    children : [
+        PetersChild
+    ]
+})
+class HansPeter {
+    public whoAmI: string = 'TheSuperMannClass'
+}
 
-//TestController.commands.register(TestCommand)
+describe('Tests if the @Service Decorator works!', () => {
+    let instance;
+    it('creates a new serivce instance.', () => {
+        instance = new HansPeter();
+    });
 
-describe('Service', () => {
+    it('checks if the property of the main service is working.', () => {
+        expect(instance.whoAmI).toBe('TheSuperMannClass')
+    });
 
-    let service : Service;
-    let testController : TestController;
-    let testCommand : CommandData;
-
-    it('creates a test controller and adds a testcommand', () => {
-        testController = new TestController();
+    it('checks if the children propery is available', () => {
+        expect(instance[CHILDREN_PROPERTY_NAME]).toBeDefined()
     })
 
-    it('creates a new command and adds it to the controller', () => {
-        testCommand = new CommandData(
-            'myFirstCommand', 
-            testController.myFirstCommand.bind(testController),
-            ['hans']
-        );
-        testController.commands.register(testCommand);
+    it('checks if the child service is instantiated well.', () => {
+        expect(instance[CHILDREN_PROPERTY_NAME].length).toBe(1);
+        expect(instance[CHILDREN_PROPERTY_NAME][0] instanceof PetersChild).toBeTruthy()
     })
 
-    it('creates a new service instance and registers the controller', () => {
-        service = new Service();
-        service.namespace = 'MyService';
-        service.controller.register(testController);
+    it('checks the property of the child service is working!', () => {
+        expect(instance[CHILDREN_PROPERTY_NAME][0].whoAmI).toBe('PetersChild');
     })
 
-    describe('applyRequest()', () => {
-        it('applies a new request to the service', async (done) => {
-            
-            let request = new ServiceRequest('MyService:MyTestController.myFirstCommand',  {
-                hans : 'peter'
-            });
-
-            let result = await service.applyRequest(request);
-
-            expect(result.acknowledged).toBeTruthy();
-            expect(result.data).toBe('peter said something');
-            done()
-        })
+    it('checks namespaces.', () => {
+        expect(instance[NAMESPACE_PROPERTY_NAME]).toBe('HansPeter');
+        expect(instance[CHILDREN_PROPERTY_NAME][0][NAMESPACE_PROPERTY_NAME]).toBe('PetersChild');
     })
 })
-
-

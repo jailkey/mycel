@@ -1,6 +1,6 @@
-import { CommandData } from './command.data';
-import { MetaData, MetaDataTypes } from '../meta/meta.data';
-import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';
+import { CommandManager } from './command.manager';
+
+export const COMMAND_MANAGER_PROPERTY_NAME = '__commands';
 
 /**
  * the command decorator marks a method as command, so its callable via the service
@@ -8,7 +8,7 @@ import { MetaManager, MetaTypeInitialiser } from '../meta/meta.manager';
  * @param method 
  * @param descriptor 
  */
-export function Command(target, method, descriptor){
+export function Command(target, property, descriptor){
 
     let descriptorValue = descriptor.value;
 
@@ -19,22 +19,23 @@ export function Command(target, method, descriptor){
         parameter = parameterParts.split(',').map(parameter => parameter.trim());
     }
 
-    let metaData : MetaData = {
-        target : target,
-        type : MetaDataTypes.command,
-        value : new CommandData(method, target[method].bind(target), parameter),
-        property : method
+    let commandManager : CommandManager;
+    if(!target.hasOwnProperty(COMMAND_MANAGER_PROPERTY_NAME)){
+        commandManager = new CommandManager();
+        Object.defineProperty(target, COMMAND_MANAGER_PROPERTY_NAME, {
+            value : commandManager,
+            enumerable: false,
+            configurable: true 
+        });
+    }else{
+        commandManager = target[COMMAND_MANAGER_PROPERTY_NAME];
     }
 
-    MetaManager.set(target, metaData);
-
+    commandManager.register({
+        name : property,
+        parameter : parameter
+    });
+    
     return descriptor;
+   
 }
-
-MetaTypeInitialiser.set(MetaDataTypes.command, (target, data) => {
-    if(!target.commands){
-        throw new Error('Can not add "@Command" decorator, class has no "commands" property');
-    }
-    target.commands.register(data.value)
-    return target;
-});
